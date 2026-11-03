@@ -1,4 +1,4 @@
-# CV Ihsan Mandiri — tahap 1–5
+# Percetakan CV Ihsan Mandiri
 
 Aplikasi internal percetakan dengan **Next.js App Router 16.4.4, TypeScript, React 19, Prisma 7.10.1, dan Neon PostgreSQL**. Node.js minimal 22.12; pengujian memakai Node 24.21.0 dan npm 11.19.0. Versi paket terpasang dibukukan di `package-lock.json`; gunakan `npm ci` pada instalasi berikutnya.
 
