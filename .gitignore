@@ -8,4 +8,8 @@ src/generated/
 !.env.example
 .qa/
 *.log
-docs
+# Dokumentasi lokal tetap diabaikan; fixture ini diperlukan typecheck dan test.
+/docs/*
+!/docs/fixtures/
+/docs/fixtures/*
+!/docs/fixtures/potong-kertas.json

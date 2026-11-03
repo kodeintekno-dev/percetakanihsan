@@ -1,0 +1,249 @@
+{
+  "schema": "PaperCutTestVectors/v1",
+  "dimensionUnit": "cm",
+  "rules": "Uniform grid original/rotated; floor per axis; tie chooses original; no kerf/bleed",
+  "cases": [
+    {
+      "id": "source_107x80_26x20_5",
+      "input": {
+        "sheetLengthCm": "107",
+        "sheetWidthCm": "80",
+        "cutLengthCm": "26",
+        "cutWidthCm": "20.5"
+      },
+      "expected": {
+        "original": {
+          "columns": 4,
+          "rows": 3,
+          "yield": 12,
+          "remainingLengthCm": "3",
+          "remainingWidthCm": "18.5",
+          "wasteAreaCm2": "2164.0",
+          "wastePercentRounded2": "25.28"
+        },
+        "rotated": {
+          "columns": 5,
+          "rows": 3,
+          "yield": 15,
+          "remainingLengthCm": "4.5",
+          "remainingWidthCm": "2",
+          "wasteAreaCm2": "565.0",
+          "wastePercentRounded2": "6.60"
+        },
+        "bestOrientation": "rotated"
+      }
+    },
+    {
+      "id": "rotasi_kalah",
+      "input": {
+        "sheetLengthCm": "100",
+        "sheetWidthCm": "70",
+        "cutLengthCm": "25",
+        "cutWidthCm": "20"
+      },
+      "expected": {
+        "original": {
+          "columns": 4,
+          "rows": 3,
+          "yield": 12,
+          "remainingLengthCm": "0",
+          "remainingWidthCm": "10",
+          "wasteAreaCm2": "1000",
+          "wastePercentRounded2": "14.29"
+        },
+        "rotated": {
+          "columns": 5,
+          "rows": 2,
+          "yield": 10,
+          "remainingLengthCm": "0",
+          "remainingWidthCm": "20",
+          "wasteAreaCm2": "2000",
+          "wastePercentRounded2": "28.57"
+        },
+        "bestOrientation": "original"
+      }
+    },
+    {
+      "id": "tidak_muat",
+      "input": {
+        "sheetLengthCm": "10",
+        "sheetWidthCm": "10",
+        "cutLengthCm": "12",
+        "cutWidthCm": "11"
+      },
+      "expected": {
+        "original": {
+          "columns": 0,
+          "rows": 0,
+          "yield": 0,
+          "remainingLengthCm": "10",
+          "remainingWidthCm": "10",
+          "wasteAreaCm2": "100",
+          "wastePercentRounded2": "100.00"
+        },
+        "rotated": {
+          "columns": 0,
+          "rows": 0,
+          "yield": 0,
+          "remainingLengthCm": "10",
+          "remainingWidthCm": "10",
+          "wasteAreaCm2": "100",
+          "wastePercentRounded2": "100.00"
+        },
+        "bestOrientation": "original"
+      }
+    },
+    {
+      "id": "pas_satu",
+      "input": {
+        "sheetLengthCm": "20",
+        "sheetWidthCm": "10",
+        "cutLengthCm": "20",
+        "cutWidthCm": "10"
+      },
+      "expected": {
+        "original": {
+          "columns": 1,
+          "rows": 1,
+          "yield": 1,
+          "remainingLengthCm": "0",
+          "remainingWidthCm": "0",
+          "wasteAreaCm2": "0",
+          "wastePercentRounded2": "0.00"
+        },
+        "rotated": {
+          "columns": 2,
+          "rows": 0,
+          "yield": 0,
+          "remainingLengthCm": "0",
+          "remainingWidthCm": "10",
+          "wasteAreaCm2": "200",
+          "wastePercentRounded2": "100.00"
+        },
+        "bestOrientation": "original"
+      }
+    },
+    {
+      "id": "hasil_imbang",
+      "input": {
+        "sheetLengthCm": "40",
+        "sheetWidthCm": "40",
+        "cutLengthCm": "20",
+        "cutWidthCm": "10"
+      },
+      "expected": {
+        "original": {
+          "columns": 2,
+          "rows": 4,
+          "yield": 8,
+          "remainingLengthCm": "0",
+          "remainingWidthCm": "0",
+          "wasteAreaCm2": "0",
+          "wastePercentRounded2": "0.00"
+        },
+        "rotated": {
+          "columns": 4,
+          "rows": 2,
+          "yield": 8,
+          "remainingLengthCm": "0",
+          "remainingWidthCm": "0",
+          "wasteAreaCm2": "0",
+          "wastePercentRounded2": "0.00"
+        },
+        "bestOrientation": "original"
+      }
+    },
+    {
+      "id": "presisi_desimal",
+      "input": {
+        "sheetLengthCm": "29.7",
+        "sheetWidthCm": "21",
+        "cutLengthCm": "9.9",
+        "cutWidthCm": "7"
+      },
+      "expected": {
+        "original": {
+          "columns": 3,
+          "rows": 3,
+          "yield": 9,
+          "remainingLengthCm": "0.0",
+          "remainingWidthCm": "0",
+          "wasteAreaCm2": "0.0",
+          "wastePercentRounded2": "0.00"
+        },
+        "rotated": {
+          "columns": 4,
+          "rows": 2,
+          "yield": 8,
+          "remainingLengthCm": "1.7",
+          "remainingWidthCm": "1.2",
+          "wasteAreaCm2": "69.3",
+          "wastePercentRounded2": "11.11"
+        },
+        "bestOrientation": "original"
+      }
+    },
+    {
+      "id": "pas_grid",
+      "input": {
+        "sheetLengthCm": "30",
+        "sheetWidthCm": "20",
+        "cutLengthCm": "10",
+        "cutWidthCm": "10"
+      },
+      "expected": {
+        "original": {
+          "columns": 3,
+          "rows": 2,
+          "yield": 6,
+          "remainingLengthCm": "0",
+          "remainingWidthCm": "0",
+          "wasteAreaCm2": "0",
+          "wastePercentRounded2": "0.00"
+        },
+        "rotated": {
+          "columns": 3,
+          "rows": 2,
+          "yield": 6,
+          "remainingLengthCm": "0",
+          "remainingWidthCm": "0",
+          "wasteAreaCm2": "0",
+          "wastePercentRounded2": "0.00"
+        },
+        "bestOrientation": "original"
+      }
+    }
+  ],
+  "invalidCases": [
+    {
+      "id": "zero_length",
+      "input": {
+        "sheetLengthCm": "0",
+        "sheetWidthCm": "80",
+        "cutLengthCm": "26",
+        "cutWidthCm": "20.5"
+      },
+      "expectedError": "invalid_dimension"
+    },
+    {
+      "id": "negative_cut",
+      "input": {
+        "sheetLengthCm": "107",
+        "sheetWidthCm": "80",
+        "cutLengthCm": "-1",
+        "cutWidthCm": "20.5"
+      },
+      "expectedError": "invalid_dimension"
+    },
+    {
+      "id": "bad_string",
+      "input": {
+        "sheetLengthCm": "abc",
+        "sheetWidthCm": "80",
+        "cutLengthCm": "26",
+        "cutWidthCm": "20.5"
+      },
+      "expectedError": "invalid_dimension"
+    }
+  ]
+}
