@@ -1,0 +1,341 @@
+.dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  margin: 20px 0 24px;
+}
+.live-metric strong {
+  color: var(--ink);
+  font-size: clamp(19px, 1.8vw, 26px);
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.live-metric small {
+  color: #738273;
+}
+.cash-income,
+.live-metric.cash-income strong {
+  color: #22724e;
+}
+.cash-expense,
+.live-metric.cash-expense strong {
+  color: #b04436;
+}
+.cash-totals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+  margin-bottom: 22px;
+}
+.cash-totals .metric-card > div {
+  min-height: 0;
+}
+.dashboard-refresh {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.dashboard-balance {
+  padding: 26px;
+}
+.dashboard-balance-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.dashboard-balance h2 {
+  font-size: 17px;
+  margin: 0 0 5px;
+}
+.dashboard-balance p {
+  font-size: 12px;
+  margin: 0;
+  color: var(--muted);
+}
+.dashboard-balance-values {
+  display: flex;
+  align-items: center;
+  gap: 35px;
+  padding: 18px 22px;
+  background: #f6f8f3;
+  border-radius: 9px;
+}
+.dashboard-balance-values small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+.dashboard-balance-values strong {
+  font-size: 24px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.balance-settings-link {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 12px;
+  text-decoration: underline;
+}
+.cash-footnote {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 20px 0;
+}
+.cash-footnote a,
+.cash-order-link {
+  text-decoration: underline;
+}
+.cash-row-detail {
+  margin-top: 9px;
+  font-size: 12px;
+}
+.cash-row-detail strong {
+  font-size: 12px;
+}
+.cash-row-detail small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  margin-top: 4px;
+}
+.cash-order-link {
+  display: block;
+  margin-top: 5px;
+  font-size: 10px;
+  color: var(--green);
+  overflow-wrap: anywhere;
+}
+.cash-description {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  min-width: 160px;
+  max-width: 360px;
+}
+.cash-table td {
+  vertical-align: top;
+}
+.cash-mobile-amount {
+  text-align: right;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  margin-top: 15px;
+  font-size: 17px;
+}
+.cash-filter-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.cash-filter-grid .order-search {
+  grid-column: auto;
+}
+.cash-order-picker {
+  background: #f7f9f5;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 18px;
+}
+.cash-order-picker h3 {
+  font-size: 14px;
+  margin: 0 0 10px;
+}
+.cash-order-search {
+  display: flex;
+  gap: 10px;
+  margin: 12px 0;
+}
+.cash-order-results {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.cash-order-results li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.cash-order-results button {
+  width: 100%;
+  text-align: left;
+  display: block;
+  background: white;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+.cash-order-results small {
+  display: block;
+  font-weight: 400;
+  color: var(--muted);
+}
+.cash-selected-order {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+}
+.cash-selected-order small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+}
+.opening-panel {
+  padding: 26px;
+  max-width: 900px;
+}
+.opening-panel h2 {
+  font-size: 18px;
+}
+.opening-panel > p {
+  color: var(--muted);
+  font-size: 12px;
+}
+.opening-form {
+  max-width: 620px;
+}
+.opening-form .alert {
+  margin: 12px 0;
+}
+.cash-wide {
+  grid-column: 1/-1;
+}
+.cash-help {
+  font-size: 12px;
+}
+.cash-help a {
+  text-decoration: underline;
+}
+.cash-sale-categories {
+  margin: 20px 0;
+}
+.cash-amount-preview {
+  text-align: right;
+  font-size: 24px;
+  margin-top: 18px;
+}
+.cash-order-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin: 8px 0;
+  padding: 12px;
+  background: white;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+.cash-order-option span,
+.cash-order-option small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 4px;
+  font-weight: 400;
+}
+.cash-order-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 10px;
+}
+.cash-linked-order {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 14px;
+  border: 1px solid #c5d9c2;
+  background: #edf5e9;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+.cash-linked-order small {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+}
+.cash-order-picker + .form-columns {
+  margin: 22px 0;
+}
+.opening-current {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 26px;
+}
+.opening-current h2 {
+  font-size: 26px;
+  margin: 8px 0;
+}
+.opening-current p,
+.opening-confirm p {
+  font-size: 12px;
+  color: var(--muted);
+}
+.opening-confirm {
+  padding: 16px;
+  background: #fff9ef;
+  border: 1px solid #eee0c6;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+.cash-form .order-form-panel > .alert {
+  margin-top: 16px;
+}
+@media (max-width: 1250px) {
+  .dashboard-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .cash-totals {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .cash-totals .metric-card {
+    padding: 16px 18px;
+  }
+  .cash-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dashboard-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .dashboard-metrics > :last-child {
+    grid-column: 1/-1;
+  }
+  .dashboard-balance {
+    padding: 20px;
+  }
+  .dashboard-balance-values {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .dashboard-balance-values > svg {
+    transform: rotate(90deg);
+  }
+  .dashboard-refresh {
+    flex-wrap: wrap;
+  }
+  .cash-description {
+    max-width: none;
+    min-width: 0;
+  }
+  .opening-panel {
+    padding: 20px;
+  }
+}
+@media (max-width: 430px) {
+  .cash-filter-grid {
+    grid-template-columns: 1fr;
+  }
+  .cash-order-search {
+    flex-direction: column;
+  }
+  .cash-selected-order {
+    flex-direction: column;
+  }
+}

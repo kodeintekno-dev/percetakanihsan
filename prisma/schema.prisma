@@ -1,0 +1,258 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ExpenseGroup {
+  PRODUCTION
+  OPERATIONAL
+  MARKETING
+}
+
+enum OrderStatus {
+  NEW
+  IN_PROGRESS
+  COMPLETED
+  PICKED_UP
+}
+
+enum CashType {
+  INCOME
+  EXPENSE
+}
+
+enum IncomeKind {
+  SALE
+  OTHER
+}
+
+enum MarginMode {
+  PERCENT_MARKUP
+  FIXED_AMOUNT
+}
+
+enum CostType {
+  PAPER
+  INK_PRINT
+  FINISHING
+  MACHINE_LABOR
+  CUSTOM
+}
+
+enum CutOrientation {
+  ORIGINAL
+  ROTATED
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  disabledAt   DateTime?
+  sessions     Session[]
+}
+
+model Session {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model LoginThrottle {
+  key       String   @id
+  attempts  Int      @default(1)
+  expiresAt DateTime
+
+  @@index([expiresAt])
+}
+
+// Metadata internal agar seed contoh tidak menimpa/menghidupkan ulang master milik pengguna.
+model SeedRun {
+  key       String   @id
+  appliedAt DateTime @default(now())
+}
+
+model ProductCategory {
+  id            String            @id @default(cuid())
+  name          String
+  nameKey       String
+  parentId      String?
+  parent        ProductCategory?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children      ProductCategory[] @relation("CategoryTree")
+  isActive      Boolean           @default(true)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  orders        PrintOrder[]      @relation("OrderCategory")
+  subOrders     PrintOrder[]      @relation("OrderSubcategory")
+  budgets       BudgetEstimate[]  @relation("BudgetCategory")
+  subBudgets    BudgetEstimate[]  @relation("BudgetSubcategory")
+  incomes       CashTransaction[] @relation("IncomeCategory")
+  subIncomes    CashTransaction[] @relation("IncomeSubcategory")
+
+  @@unique([parentId, nameKey])
+  @@index([isActive, parentId])
+}
+
+model ExpensePost {
+  id           String            @id @default(cuid())
+  name         String
+  nameKey      String            @unique
+  group        ExpenseGroup
+  isActive     Boolean           @default(true)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  transactions CashTransaction[]
+
+  @@index([isActive, group])
+}
+
+model PrintOrder {
+  id                   String            @id @default(cuid())
+  orderNumber          String            @unique
+  orderDate            DateTime          @db.Date
+  customerName         String
+  categoryId           String
+  subcategoryId        String?
+  category             ProductCategory   @relation("OrderCategory", fields: [categoryId], references: [id], onDelete: Restrict)
+  subcategory          ProductCategory?  @relation("OrderSubcategory", fields: [subcategoryId], references: [id], onDelete: Restrict)
+  categoryNameSnapshot String
+  productNameSnapshot  String
+  quantity             Decimal           @db.Decimal(18, 3)
+  unit                 String
+  unitPrice            Decimal           @db.Decimal(18, 0)
+  totalPrice           Decimal           @db.Decimal(18, 0)
+  status               OrderStatus       @default(NEW)
+  notes                String?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  deletedAt            DateTime?
+  incomes              CashTransaction[]
+  budgets              BudgetEstimate[]
+
+  @@index([orderDate])
+  @@index([status, orderDate])
+  @@index([categoryId, orderDate])
+  @@index([subcategoryId])
+}
+
+model CashTransaction {
+  id                   String           @id @default(cuid())
+  requestKey           String?          @unique
+  requestHash          String?
+  transactionDate      DateTime         @db.Date
+  type                 CashType
+  description          String
+  amount               Decimal          @db.Decimal(18, 0)
+  expensePostId        String?
+  expensePost          ExpensePost?     @relation(fields: [expensePostId], references: [id], onDelete: Restrict)
+  expenseGroupSnapshot ExpenseGroup?
+  incomeKind           IncomeKind?
+  categoryId           String?
+  subcategoryId        String?
+  category             ProductCategory? @relation("IncomeCategory", fields: [categoryId], references: [id], onDelete: Restrict)
+  subcategory          ProductCategory? @relation("IncomeSubcategory", fields: [subcategoryId], references: [id], onDelete: Restrict)
+  categoryNameSnapshot String?
+  productNameSnapshot  String?
+  orderId              String?
+  order                PrintOrder?      @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  soldQuantity         Decimal?         @db.Decimal(18, 3)
+  soldUnit             String?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  deletedAt            DateTime?
+
+  @@index([transactionDate, type])
+  @@index([expensePostId, transactionDate])
+  @@index([categoryId, transactionDate])
+  @@index([subcategoryId])
+  @@index([orderId])
+}
+
+model CashOpeningSetting {
+  id            Int      @id @default(1)
+  openingDate   DateTime @db.Date
+  openingAmount Decimal  @db.Decimal(18, 0)
+  isConfigured  Boolean  @default(false)
+  updatedAt     DateTime @updatedAt
+}
+
+model BudgetEstimate {
+  id                    String              @id @default(cuid())
+  budgetNumber          String              @unique
+  orderId               String?
+  orderNumberSnapshot   String?
+  customerNameSnapshot  String?
+  order                 PrintOrder?         @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  categoryId            String?
+  subcategoryId         String?
+  category              ProductCategory?    @relation("BudgetCategory", fields: [categoryId], references: [id], onDelete: Restrict)
+  subcategory           ProductCategory?    @relation("BudgetSubcategory", fields: [subcategoryId], references: [id], onDelete: Restrict)
+  categoryNameSnapshot  String?
+  productNameSnapshot   String?
+  title                 String
+  quantity              Decimal             @db.Decimal(18, 3)
+  unit                  String
+  marginMode            MarginMode
+  marginValue           Decimal             @db.Decimal(20, 2)
+  totalHpp              Decimal             @db.Decimal(18, 0)
+  hppPerUnit            Decimal             @db.Decimal(25, 4)
+  suggestedSellingTotal Decimal             @db.Decimal(18, 0)
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  deletedAt             DateTime?
+  costItems             BudgetCostItem[]
+  paperCut              PaperCutSimulation?
+
+  @@index([orderId])
+  @@index([categoryId])
+  @@index([subcategoryId])
+  @@index([createdAt])
+}
+
+model BudgetCostItem {
+  id        String         @id @default(cuid())
+  budgetId  String
+  budget    BudgetEstimate @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  label     String
+  costType  CostType
+  quantity  Decimal        @db.Decimal(18, 3)
+  unitCost  Decimal        @db.Decimal(18, 0)
+  totalCost Decimal        @db.Decimal(18, 0)
+  sortOrder Int            @default(0)
+  fromPaperCut Boolean     @default(false)
+
+  @@index([budgetId, sortOrder])
+}
+
+model PaperCutSimulation {
+  id                     String         @id @default(cuid())
+  budgetId               String         @unique
+  budget                 BudgetEstimate @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  sheetLengthCm          Decimal        @db.Decimal(12, 2)
+  sheetWidthCm           Decimal        @db.Decimal(12, 2)
+  cutLengthCm            Decimal        @db.Decimal(12, 2)
+  cutWidthCm             Decimal        @db.Decimal(12, 2)
+  selectedOrientation    CutOrientation
+  originalYield          Decimal        @db.Decimal(24, 0)
+  rotatedYield           Decimal        @db.Decimal(24, 0)
+  chosenYield            Decimal        @db.Decimal(24, 0)
+  wasteAreaCm2           Decimal        @db.Decimal(24, 4)
+  calculationSnapshot    Json?
+  paperPricePerSheet      Decimal?       @db.Decimal(18, 0)
+  requiredFinishedPieces Decimal?       @db.Decimal(18, 0)
+  requiredParentSheets   Decimal?       @db.Decimal(18, 0)
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+}

@@ -1,0 +1,466 @@
+.report-export-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.report-filter,
+.report-panel {
+  padding: 25px;
+}
+.report-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.report-section-heading h2 {
+  font-size: 17px;
+  margin: 0;
+}
+.report-filter > .report-section-heading {
+  justify-content: flex-start;
+}
+.report-filter-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 20px;
+}
+.report-period-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  gap: 20px;
+  min-width: 0;
+}
+.report-period-fields[hidden] {
+  display: none;
+}
+.report-updated {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin: 0 0 20px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.report-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 22px;
+}
+.report-alert .button {
+  flex-shrink: 0;
+}
+.report-balance-note {
+  margin-bottom: 22px;
+}
+.report-balance-note p {
+  margin: 0 0 10px;
+}
+.report-hint {
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.report-empty {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 20px 0;
+}
+.report-metrics .metric-card strong {
+  overflow-wrap: anywhere;
+}
+.report-table-wrap {
+  overflow-x: auto;
+  width: 100%;
+}
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.report-table th {
+  text-align: left;
+  font-size: 10px;
+  color: var(--muted);
+  background: #f6f8f3;
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.report-table td {
+  padding: 16px 14px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.report-table td:first-child {
+  max-width: 280px;
+}
+.report-table small {
+  display: block;
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+.report-money {
+  white-space: nowrap;
+  font-weight: 500;
+}
+.report-quantities {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.report-mobile {
+  display: none;
+}
+.report-subtotal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: 13px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+.report-other {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 18px;
+  background: #faf9f3;
+  border-radius: 9px;
+  margin: 18px 0;
+}
+.report-other h3 {
+  font-size: 13px;
+  margin: 0 0 5px;
+}
+.report-other p {
+  font-size: 10px;
+  color: var(--muted);
+  margin: 0;
+}
+.report-other > strong {
+  font-size: 16px;
+  white-space: nowrap;
+}
+.report-grand-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px;
+  background: #eaf3e5;
+  border: 1px solid #d4e3ce;
+  border-radius: 9px;
+  font-size: 13px;
+}
+.report-grand-total small {
+  display: block;
+  font-size: 10px;
+  margin-top: 6px;
+  color: var(--muted);
+}
+.report-grand-total > strong {
+  font-size: 21px;
+  white-space: nowrap;
+}
+.report-expense-groups {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+}
+.report-expense-groups article {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 18px;
+  min-width: 0;
+}
+.report-expense-title {
+  margin-bottom: 12px;
+}
+.report-expense-title h3 {
+  font-size: 13px;
+  margin: 0 0 8px;
+}
+.report-expense-title > strong {
+  font-size: 20px;
+  overflow-wrap: anywhere;
+}
+.report-expense-row {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+}
+.report-expense-row strong {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.report-expense-row small {
+  display: block;
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.report-expense-row > span {
+  display: block;
+  text-align: right;
+  margin-top: 8px;
+}
+.report-profit,
+.report-cash-flow {
+  margin: 20px 0 0;
+  font-size: 13px;
+}
+.report-profit > div,
+.report-cash-flow > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--line);
+}
+.report-profit dt,
+.report-cash-flow dt {
+  color: var(--muted);
+}
+.report-profit dd,
+.report-cash-flow dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.report-net {
+  border-top: 2px solid #bad0b6;
+  margin-top: 8px;
+  font-size: 16px;
+}
+.report-net dt {
+  color: var(--ink);
+  font-weight: 600;
+}
+.report-opening {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  background: #f4f7ef;
+  border-radius: 9px;
+  padding: 20px;
+  margin: 20px 0;
+}
+.report-opening small {
+  display: block;
+  font-size: 10px;
+  color: var(--muted);
+  margin-bottom: 7px;
+}
+.report-opening strong {
+  font-size: 22px;
+  overflow-wrap: anywhere;
+}
+.report-opening p {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 7px 0 0;
+}
+.report-daily-title {
+  font-size: 14px;
+  margin: 28px 0 8px;
+}
+.report-daily {
+  min-width: 800px;
+}
+.report-daily td {
+  white-space: nowrap;
+}
+.report-posts article {
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+}
+.report-post-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+  font-size: 13px;
+}
+.report-post-heading > div:first-child {
+  min-width: 0;
+}
+.report-post-heading strong {
+  overflow-wrap: anywhere;
+}
+.report-post-heading small {
+  display: block;
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+.report-post-heading > div:last-child {
+  text-align: right;
+}
+.report-post-heading span {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+.report-posts progress {
+  display: block;
+  width: 100%;
+  height: 9px;
+  margin-top: 13px;
+  accent-color: #327759;
+  border: 0;
+  border-radius: 20px;
+  background: #eaf0e4;
+}
+.report-posts progress::-webkit-progress-bar {
+  background: #eaf0e4;
+  border-radius: 20px;
+}
+.report-posts progress::-webkit-progress-value {
+  background: #327759;
+  border-radius: 20px;
+}
+.report-posts progress::-moz-progress-bar {
+  background: #327759;
+  border-radius: 20px;
+}
+@media (max-width: 1100px) {
+  .report-expense-groups {
+    grid-template-columns: 1fr;
+  }
+  .report-expense-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    align-items: center;
+  }
+  .report-expense-row > span {
+    margin: 0;
+  }
+  .report-other,
+  .report-grand-total {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 760px) {
+  .report-desktop {
+    display: none;
+  }
+  .report-mobile {
+    display: block;
+  }
+  .report-income-card {
+    padding: 18px 0;
+    border-top: 1px solid var(--line);
+  }
+  .report-income-card h3 {
+    font-size: 14px;
+    margin: 0 0 5px;
+    overflow-wrap: anywhere;
+  }
+  .report-income-card > p {
+    font-size: 11px;
+    color: var(--muted);
+    margin: 0;
+  }
+  .report-income-card dl {
+    font-size: 12px;
+  }
+  .report-income-card dl > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-top: 11px;
+  }
+  .report-income-card dt {
+    color: var(--muted);
+  }
+  .report-income-card dd {
+    margin: 0;
+    text-align: right;
+  }
+  .report-income-card small {
+    display: block;
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .report-income-card > strong {
+    display: block;
+    text-align: right;
+    font-size: 18px;
+    margin-top: 15px;
+  }
+  .report-filter-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .report-filter,
+  .report-panel {
+    padding: 19px;
+  }
+  .report-section-heading h2 {
+    font-size: 16px;
+  }
+  .report-period-fields {
+    gap: 14px;
+  }
+  .report-export-buttons {
+    width: 100%;
+  }
+  .report-export-buttons > button {
+    flex: 1;
+  }
+  .report-updated,
+  .report-alert {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .report-other,
+  .report-grand-total {
+    gap: 12px;
+  }
+  .report-grand-total > strong {
+    font-size: 20px;
+  }
+  .report-other > strong {
+    margin-left: auto;
+  }
+  .report-opening {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 16px;
+  }
+  .report-profit,
+  .report-cash-flow {
+    font-size: 12px;
+  }
+  .report-net {
+    font-size: 14px;
+  }
+  .report-cash-flow dd {
+    max-width: 60%;
+  }
+  .report-post-heading {
+    font-size: 12px;
+  }
+  .report-post-heading > div:last-child {
+    max-width: 58%;
+  }
+}

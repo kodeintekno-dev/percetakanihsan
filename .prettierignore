@@ -1,0 +1,6 @@
+node_modules
+.next
+.qa
+src/generated
+package-lock.json
+docs
