@@ -16,6 +16,7 @@ import {
   X,
   LogOut,
   ChevronRight,
+  Download,
 } from "lucide-react";
 
 const groups = [
@@ -160,7 +161,8 @@ export function AppShell({
             <Menu />
           </button>
           <div className="breadcrumb">
-            Ruang kerja <ChevronRight size={14} />
+            <span className="breadcrumb-context">Ruang kerja</span>
+            <ChevronRight size={14} />
             <strong>
               {groups
                 .flatMap((g) => g.items)
@@ -170,10 +172,16 @@ export function AppShell({
                 )?.label ?? "Halaman"}
             </strong>
           </div>
-          <span className="company-name">
-            CV Ihsan Mandiri
-            <span className="status-dot" />
-          </span>
+          <div className="topbar-actions">
+            <span className="company-name">
+              CV Ihsan Mandiri
+              <span className="status-dot" />
+            </span>
+            <a className="button secondary guide-download" href="/api/guide">
+              <Download size={16} aria-hidden="true" />
+              Unduh Panduan
+            </a>
+          </div>
         </header>
         <main id="konten" className="main-content">
           {error && (

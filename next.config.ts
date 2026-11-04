@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const config: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ["pg", "@prisma/adapter-pg"],
+  outputFileTracingIncludes: {
+    "/api/guide": ["./output/pdf/buku-panduan-cv-ihsan-mandiri.pdf"],
+  },
   async headers() {
     return [
       {

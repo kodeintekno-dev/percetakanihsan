@@ -288,6 +288,7 @@ h3 {
 .breadcrumb {
   display: flex;
   align-items: center;
+  min-width: 0;
   gap: 12px;
   color: #9aa39e;
   font-size: 12px;
@@ -295,6 +296,19 @@ h3 {
 .breadcrumb strong {
   color: #53655b;
   font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.guide-download {
+  font-size: 12px;
+  white-space: nowrap;
+  padding-inline: 12px;
 }
 .company-name {
   display: flex;
@@ -1055,9 +1069,6 @@ select[aria-invalid="true"] {
     justify-content: flex-start;
     padding: 0 20px;
   }
-  .company-name {
-    margin-left: auto;
-  }
   .main-content {
     padding: 26px 22px;
   }
@@ -1084,6 +1095,10 @@ select[aria-invalid="true"] {
     gap: 10px;
   }
   .company-name {
+    display: none;
+  }
+  .breadcrumb-context,
+  .breadcrumb > svg {
     display: none;
   }
   .breadcrumb {
