@@ -30,6 +30,11 @@ enum IncomeKind {
   OTHER
 }
 
+enum TradeKind {
+  RECEIVABLE
+  PAYABLE
+}
+
 enum MarginMode {
   PERCENT_MARKUP
   FIXED_AMOUNT
@@ -106,6 +111,7 @@ model ProductCategory {
 }
 
 model ExpensePost {
+  invoices     TradeInvoice[]
   id           String            @id @default(cuid())
   name         String
   nameKey      String            @unique
@@ -119,6 +125,7 @@ model ExpensePost {
 }
 
 model PrintOrder {
+  invoices             TradeInvoice[]
   id                   String            @id @default(cuid())
   orderNumber          String            @unique
   orderDate            DateTime          @db.Date
@@ -148,6 +155,7 @@ model PrintOrder {
 }
 
 model CashTransaction {
+  invoicePayments      TradePayment[]
   purchasedAsset       FixedAsset?
   id                   String           @id @default(cuid())
   requestKey           String?          @unique
@@ -192,6 +200,58 @@ model FixedAsset {
   purchaseCash    CashTransaction? @relation(fields: [purchaseCashId], references: [id], onDelete: Restrict)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+}
+
+model TradeInvoice {
+  id                    String        @id @default(cuid())
+  requestHash           String
+  kind                  TradeKind
+  reference             String
+  referenceKey          String
+  partyName             String
+  issueDate             DateTime      @db.Date
+  dueDate               DateTime      @db.Date
+  amount                Decimal       @db.Decimal(18, 0)
+  paidAmount            Decimal       @default(0) @db.Decimal(18, 0)
+  orderId               String?
+  order                 PrintOrder?   @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  orderNumberSnapshot   String?
+  categoryId            String?
+  subcategoryId         String?
+  categoryNameSnapshot  String?
+  productNameSnapshot   String?
+  expensePostId         String?
+  expensePost           ExpensePost?  @relation(fields: [expensePostId], references: [id], onDelete: Restrict)
+  expenseGroupSnapshot  ExpenseGroup?
+  notes                 String        @default("")
+  cancelledAt           DateTime?
+  cancelReason          String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  payments              TradePayment[]
+
+  @@unique([kind, referenceKey])
+  @@index([kind, cancelledAt, dueDate])
+  @@index([orderId])
+  @@index([expensePostId])
+}
+
+model TradePayment {
+  id           String          @id @default(cuid())
+  requestHash  String
+  invoiceId    String
+  invoice      TradeInvoice    @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  cashId       String
+  cash         CashTransaction @relation(fields: [cashId], references: [id], onDelete: Restrict)
+  amount       Decimal         @db.Decimal(18, 0)
+  createdCash  Boolean
+  notes        String          @default("")
+  voidedAt     DateTime?
+  voidReason   String?
+  createdAt    DateTime        @default(now())
+
+  @@index([invoiceId, voidedAt])
+  @@index([cashId])
 }
 
 model CashOpeningSetting {

@@ -703,10 +703,30 @@ export function ReportView({ data }: { data: ReportData }) {
           </p>
         )}
       </section>
+      <section className="panel report-panel" aria-labelledby="report-trade">
+        <div className="report-section-heading">
+          <h2 id="report-trade">Hutang-Piutang per akhir periode</h2>
+          <Link href="/hutang-piutang">Kelola tagihan ↗</Link>
+        </div>
+        <dl className="report-profit">
+          <div>
+            <dt>Sisa piutang</dt>
+            <dd>{formatRupiah(data.trade.receivableRemaining)}</dd>
+          </div>
+          <div>
+            <dt>Sisa hutang</dt>
+            <dd>{formatRupiah(data.trade.payableRemaining)}</dd>
+          </div>
+        </dl>
+        <p className="report-hint">
+          {data.trade.basis} Nominal pembayaran sudah tercakup di Buku Kas dan
+          tidak ditambahkan lagi ke pendapatan atau biaya.
+        </p>
+      </section>
       <p className="report-hint">
         Ekspor Excel mencakup Ringkasan, Pendapatan, Pengeluaran, Arus Kas,
-        Analitik Pos, dan Penyusutan. CSV menyimpan seluruh bagian dalam tabel
-        terstruktur.
+        Analitik Pos, Penyusutan, Piutang, Hutang, dan Pembayaran Tagihan. CSV
+        menyimpan seluruh bagian dalam tabel terstruktur.
       </p>
     </>
   );

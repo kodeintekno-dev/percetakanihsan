@@ -134,32 +134,48 @@ export function CashList({
       setBusy("");
     }
   }
-  const actions = (row: CashRow) => (
-    <div className="order-actions">
+  const actions = (row: CashRow) =>
+    row.linkedInvoiceId ? (
       <Link
-        className="icon-button"
-        href={`/buku-kas/${row.id}/edit`}
-        aria-label={`Ubah transaksi ${row.description}`}
-        title="Ubah transaksi"
+        className="text-button"
+        href={`/hutang-piutang/${row.linkedInvoiceId}`}
       >
-        <Pencil size={17} />
+        Buka tagihan
       </Link>
-      <button
-        className="icon-button danger-text"
-        disabled={pending}
-        aria-label={`Hapus transaksi ${row.description}`}
-        title="Hapus transaksi"
-        onClick={() => {
-          setError("");
-          setDeleting(row);
-        }}
-      >
-        <Trash2 size={17} />
-      </button>
-    </div>
-  );
+    ) : (
+      <div className="order-actions">
+        <Link
+          className="icon-button"
+          href={`/buku-kas/${row.id}/edit`}
+          aria-label={`Ubah transaksi ${row.description}`}
+          title="Ubah transaksi"
+        >
+          <Pencil size={17} />
+        </Link>
+        <button
+          className="icon-button danger-text"
+          disabled={pending}
+          aria-label={`Hapus transaksi ${row.description}`}
+          title="Hapus transaksi"
+          onClick={() => {
+            setError("");
+            setDeleting(row);
+          }}
+        >
+          <Trash2 size={17} />
+        </button>
+      </div>
+    );
   const detail = (row: CashRow) => (
     <div className="cash-row-detail">
+      {row.linkedInvoiceId && (
+        <Link
+          className="cash-order-link"
+          href={`/hutang-piutang/${row.linkedInvoiceId}`}
+        >
+          Pembayaran {row.linkedInvoiceReference}
+        </Link>
+      )}
       {row.type === "EXPENSE" ? (
         <>
           <strong>{row.expensePostName}</strong>

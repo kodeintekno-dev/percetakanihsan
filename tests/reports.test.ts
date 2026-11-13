@@ -62,7 +62,7 @@ describe("RPT periode WIB dan presisi ekspor", () => {
   });
 });
 describe("RPT-08: isi dan struktur berkas laporan lengkap", () => {
-  it("CSV13 kolom, seluruh bagian dan angka rekonsiliasi, BOM/CRLF", () => {
+  it("CSV40 kolom, seluruh bagian dan angka rekonsiliasi, BOM/CRLF", () => {
     const csv = reportsCsv(reportFixture());
     expect(csv.charCodeAt(0)).toBe(0xfeff);
     expect(csv).toContain("\r\n");
@@ -99,7 +99,7 @@ describe("RPT-08: isi dan struktur berkas laporan lengkap", () => {
         .persentase,
     ).toBe("57.14");
   });
-  it("XLSX lima sheet bernama tepat, judul/periode, tipe numerik dan nilai identik", async () => {
+  it("XLSX sembilan sheet bernama tepat, judul/periode, tipe numerik dan nilai identik", async () => {
     const b = new ExcelJS.Workbook();
     await b.xlsx.load(
       Uint8Array.from(await reportsXlsx(reportFixture())).buffer,
@@ -111,6 +111,9 @@ describe("RPT-08: isi dan struktur berkas laporan lengkap", () => {
       "Arus Kas",
       "Analitik Pos",
       "Penyusutan",
+      "Piutang",
+      "Hutang",
+      "Pembayaran Tagihan",
     ]);
     expect(b.getWorksheet("Ringkasan")!.getCell("A1").value).toBe(
       "CV Ihsan Mandiri",
@@ -212,7 +215,7 @@ describe("RPT-08: isi dan struktur berkas laporan lengkap", () => {
     ).toMatchObject({ saldo_awal: "", saldo_akhir: "" });
     const book = new ExcelJS.Workbook();
     await book.xlsx.load(Uint8Array.from(await reportsXlsx(d)).buffer);
-    expect(book.worksheets).toHaveLength(6);
+    expect(book.worksheets).toHaveLength(9);
     expect(book.getWorksheet("Arus Kas")!.getCell("F8").value).toBeNull();
     d.finance.income = "1000000000000000000";
     await book.xlsx.load(Uint8Array.from(await reportsXlsx(d)).buffer);

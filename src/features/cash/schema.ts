@@ -168,6 +168,8 @@ export const financePeriodSchema = z
       });
   });
 export type CashRow = {
+  linkedInvoiceId?: string | null;
+  linkedInvoiceReference?: string | null;
   id: string;
   transactionDate: string;
   type: "INCOME" | "EXPENSE";

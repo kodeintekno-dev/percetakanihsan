@@ -7,6 +7,7 @@ import { financialSummary } from "@/features/cash/aggregates";
 import { AppError } from "@/lib/app-error";
 import { serializeAsset } from "@/features/assets/service";
 import { assetDepreciation } from "@/features/assets/depreciation";
+import { reportTradeSnapshot } from "@/features/trade/export-data";
 import {
   reportPeriod,
   reportFilterSchema,
@@ -37,6 +38,7 @@ export async function getReport(filters: ReportFilters): Promise<ReportData> {
   return getDb().$transaction(
     async (tx) => {
       const finance = await financialSummary(tx, period.start, period.end);
+      const trade = await reportTradeSnapshot(tx, period.start, period.end);
       const fixedAssets = await tx.fixedAsset.findMany();
       const assetRows = fixedAssets.map((a) => ({
         id: a.id,
@@ -319,6 +321,7 @@ export async function getReport(filters: ReportFilters): Promise<ReportData> {
           503,
         );
       const result = {
+        trade,
         assets,
         period,
         finance,

@@ -7,6 +7,11 @@ import {
 } from "@/lib/spreadsheet-export";
 import { expenseGroupNames, type ReportData } from "./schema";
 import { incomeName, reportBalanceNote } from "./format";
+import {
+  tradeCsvHeaders,
+  tradeCsvRows,
+  tradeSheets,
+} from "@/features/trade/export";
 export const reportCsvHeaders = [
   "bagian",
   "subbagian",
@@ -21,6 +26,7 @@ export const reportCsvHeaders = [
   "saldo_akhir",
   "periode_mulai",
   "periode_selesai",
+  ...tradeCsvHeaders,
 ];
 const n = (value: string | number | null): ExportCell =>
   value === null ? null : { number: String(value) };
@@ -266,21 +272,59 @@ export function reportFlatRows(data: ReportData): ExportCell[][] {
         amount: a.bookValue,
       },
     );
-  return rows.map((r) => [
-    r.section,
-    r.sub,
-    r.name,
-    n(r.transactions ?? null),
-    n(r.orders ?? null),
-    n(r.quantity ?? null),
-    r.unit ?? null,
-    n(r.amount ?? null),
-    n(r.percent ?? null),
-    n(r.opening ?? null),
-    n(r.closing ?? null),
-    data.period.start,
-    data.period.end,
-  ]);
+  rows.push(
+    {
+      section: "ringkasan",
+      sub: "sisa_piutang",
+      name: "Sisa piutang s/d akhir periode",
+      amount: data.trade.receivableRemaining,
+    },
+    {
+      section: "ringkasan",
+      sub: "sisa_hutang",
+      name: "Sisa hutang s/d akhir periode",
+      amount: data.trade.payableRemaining,
+    },
+    { section: "metadata", sub: "basis_tagihan", name: data.trade.basis },
+  );
+  return [
+    ...rows.map((r) => [
+      r.section,
+      r.sub,
+      r.name,
+      n(r.transactions ?? null),
+      n(r.orders ?? null),
+      n(r.quantity ?? null),
+      r.unit ?? null,
+      n(r.amount ?? null),
+      n(r.percent ?? null),
+      n(r.opening ?? null),
+      n(r.closing ?? null),
+      data.period.start,
+      data.period.end,
+      ...Array<null>(tradeCsvHeaders.length).fill(null),
+    ]),
+    ...tradeCsvRows(data.trade).map((row) => [
+      row[0] === "PEMBAYARAN"
+        ? "pembayaran_tagihan"
+        : row[2] === "Piutang Pelanggan"
+          ? "tagihan_piutang"
+          : "tagihan_hutang",
+      row[0] === "PEMBAYARAN" ? "pembayaran_periode" : "posisi_akhir",
+      row[3],
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      data.period.start,
+      data.period.end,
+      ...row,
+    ]),
+  ];
 }
 export const reportsCsv = (data: ReportData) =>
   tabularCsv(reportCsvHeaders, reportFlatRows(data));
@@ -465,6 +509,18 @@ export async function reportsXlsx(data: ReportData) {
           n(data.assets.adjustedNet),
           "Selisih kas + pembelian aset tertaut - penyusutan",
         ],
+        [
+          "Tagihan",
+          "Sisa piutang akhir periode (Rp)",
+          n(data.trade.receivableRemaining),
+          "Saldo tagihan; bukan kas masuk baru",
+        ],
+        [
+          "Tagihan",
+          "Sisa hutang akhir periode (Rp)",
+          n(data.trade.payableRemaining),
+          "Saldo tagihan; bukan kas keluar baru",
+        ],
       ],
       notes: [
         "Laba/rugi ini adalah ringkasan operasional kas tercatat. Harga pesanan dan estimasi HPP tidak menjadi pendapatan/beban otomatis.",
@@ -632,6 +688,12 @@ export async function reportsXlsx(data: ReportData) {
     ],
   });
 
+  specs.push(
+    ...tradeSheets(data.trade, true).map((spec) => ({
+      ...spec,
+      widths: spec.widths ?? spec.headers.map(() => 25),
+    })),
+  );
   for (const spec of specs)
     for (
       let part = 0;

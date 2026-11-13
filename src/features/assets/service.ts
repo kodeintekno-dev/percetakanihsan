@@ -50,6 +50,15 @@ export async function createAsset(input: unknown) {
         );
     }
     if (data.purchaseCashId) {
+      if (
+        await tx.tradePayment.findFirst({
+          where: { cashId: data.purchaseCashId, voidedAt: null },
+        })
+      )
+        throw new AppError(
+          "Pembayaran Hutang-Piutang tidak dapat dijadikan pembelian aset tertaut. Fitur hutang ini khusus tagihan bahan dan jasa, bukan cicilan aset.",
+          422,
+        );
       const cash = await tx.cashTransaction.findFirst({
         where: { id: data.purchaseCashId, type: "EXPENSE", deletedAt: null },
         include: { purchasedAsset: true },

@@ -17,6 +17,7 @@ import {
   LogOut,
   ChevronRight,
   Download,
+  ArrowLeftRight,
 } from "lucide-react";
 
 const groups = [
@@ -26,6 +27,11 @@ const groups = [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { href: "/permintaan", label: "Permintaan Cetak", icon: ClipboardList },
       { href: "/buku-kas", label: "Buku Kas", icon: Wallet },
+      {
+        href: "/hutang-piutang",
+        label: "Hutang-Piutang",
+        icon: ArrowLeftRight,
+      },
       { href: "/budgeting", label: "Budgeting", icon: Calculator },
       { href: "/laporan", label: "Laporan", icon: ChartNoAxesCombined },
     ],

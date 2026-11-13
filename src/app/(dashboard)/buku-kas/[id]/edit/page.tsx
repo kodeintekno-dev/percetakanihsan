@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { requirePageAdmin } from "@/lib/auth/session";
 import { AppError } from "@/lib/app-error";
 import { getCash, getOpeningSettings } from "@/features/cash/service";
@@ -17,6 +17,8 @@ export default async function EditCashPage({
     if (error instanceof AppError && error.status === 404) notFound();
     throw error;
   });
+  if (initial.linkedInvoiceId)
+    redirect(`/hutang-piutang/${initial.linkedInvoiceId}`);
   const [categories, posts, config, initialOrder] = await Promise.all([
     getCategoryRows(),
     getExpenseRows(),

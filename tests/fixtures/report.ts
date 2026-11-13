@@ -1,6 +1,14 @@
 import type { ReportData } from "@/features/reports/schema";
 export function reportFixture(): ReportData {
   return {
+    trade: {
+      invoices: [],
+      payments: [],
+      receivableRemaining: "0",
+      payableRemaining: "0",
+      basis:
+        "Posisi tagihan s/d 2026-11-30; pembayaran pada periode laporan; koreksi data terkini.",
+    },
     assets: {
       rows: [],
       depreciation: "0",

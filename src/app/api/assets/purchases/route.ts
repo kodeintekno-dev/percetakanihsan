@@ -14,6 +14,7 @@ export async function GET(request: Request) {
         type: "EXPENSE",
         deletedAt: null,
         purchasedAsset: null,
+        invoicePayments: { none: { voidedAt: null } },
         description: { contains: q, mode: "insensitive" },
       },
       take: 20,

@@ -176,6 +176,23 @@ export async function saveOrder(input: unknown, id?: string) {
         409,
       );
     if (old) {
+      const invoice = await tx.tradeInvoice.findFirst({
+        where: { orderId: old.id, kind: "RECEIVABLE", cancelledAt: null },
+      });
+      if (invoice) {
+        if (
+          old.customerName !== data.customerName ||
+          !old.quantity.eq(data.quantity) ||
+          !old.unitPrice.eq(data.unitPrice) ||
+          old.unit !== data.unit ||
+          !unchanged ||
+          data.orderDate > dateOnly(invoice.issueDate)
+        )
+          throw new AppError(
+            "Pesanan sudah memiliki piutang aktif. Pelanggan, kategori, jumlah, satuan, dan harga dilindungi; tanggal pesanan tidak boleh melewati tanggal tagihan. Koreksi atau batalkan tagihan beserta pembayarannya terlebih dahulu.",
+            409,
+          );
+      }
       const allocated = await tx.cashTransaction.aggregate({
         where: {
           orderId: old.id,
@@ -269,6 +286,15 @@ export async function changeOrderStatus(id: string, input: unknown) {
 export async function removeOrder(id: string, input: unknown) {
   const data = deleteOrderSchema.parse(input);
   return serializable(getDb(), async (tx) => {
+    if (
+      await tx.tradeInvoice.findFirst({
+        where: { orderId: id, cancelledAt: null },
+      })
+    )
+      throw new AppError(
+        "Pesanan terkait tagihan Hutang-Piutang aktif. Batalkan tagihan terlebih dahulu; riwayat pembayaran tetap disimpan.",
+        409,
+      );
     const row = assertRevision(
       await tx.printOrder.findUnique({ where: { id }, include }),
       data.updatedAt,

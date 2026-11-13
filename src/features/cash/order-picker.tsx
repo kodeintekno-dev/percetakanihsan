@@ -31,6 +31,7 @@ export function CashOrderPicker({
   description,
   error,
   children,
+  required = false,
 }: {
   order: OrderRow | null;
   onChange: (row: OrderRow | null) => void;
@@ -38,6 +39,7 @@ export function CashOrderPicker({
   description: string;
   error?: string;
   children?: ReactNode;
+  required?: boolean;
 }) {
   const router = useRouter();
   const id = useId();
@@ -151,7 +153,9 @@ export function CashOrderPicker({
         <div>
           <div className="cash-picker-title">
             <h3 id={`${id}-title`}>Hubungkan pesanan</h3>
-            <span className="cash-picker-optional">Opsional</span>
+            <span className="cash-picker-optional">
+              {required ? "Wajib" : "Opsional"}
+            </span>
           </div>
           <p id={`${id}-description`}>{description}</p>
         </div>

@@ -26,6 +26,8 @@ export const cashHeaders = [
   "Kuantitas Terjual",
   "Satuan",
   "Status Kuantitas",
+  "Kode Tagihan",
+  "Nomor Tagihan",
 ];
 function cells(row: CashRow): ExportCell[] {
   return [
@@ -47,6 +49,8 @@ function cells(row: CashRow): ExportCell[] {
         ? "Belum dicatat"
         : "Dicatat eksplisit"
       : "Tidak berlaku",
+    row.linkedInvoiceId ?? null,
+    row.linkedInvoiceReference ?? null,
   ];
 }
 export const cashCsv = (rows: CashRow[]) =>

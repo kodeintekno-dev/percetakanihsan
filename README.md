@@ -2,7 +2,7 @@
 
 Aplikasi internal percetakan dengan **Next.js App Router 16.4.4, TypeScript, React 19, Prisma 7.10.1, dan Neon PostgreSQL**. Node.js minimal 22.12; pengujian memakai Node 24.21.0 dan npm 11.19.0. Versi paket terpasang dibukukan di `package-lock.json`; gunakan `npm ci` pada instalasi berikutnya.
 
-Tersedia login/logout admin, kategori produk/jasa dua level, pos pengeluaran, **manajemen permintaan cetak**, **Buku Kas**, **saldo pembukaan**, **dashboard dari database**, serta **Budgeting HPP dan Canvas potong kertas**. Daftar pesanan/kas mendukung filter URL, pagination, soft-delete, dan ekspor Excel/CSV seluruh hasil filter. Dashboard diperbarui setelah mutasi, saat kembali ke tab, dan otomatis setiap 15 detik selama tab terlihat. Budgeting menyimpan seluruh komponen dan snapshot perhitungan, dengan keuntungan persen/nominal. Shell responsif berbahasa Indonesia. Laporan lengkap berbasis kas tersedia pada `/laporan`, dengan rincian produk, tiga kelompok beban, arus kas, analitik pos serta ekspor Excel enam worksheet dan CSV terstruktur. Tidak ada COA, jurnal, ledger, neraca posisi keuangan, atau payment gateway.
+Tersedia login/logout admin, kategori produk/jasa dua level, pos pengeluaran, **manajemen permintaan cetak**, **Buku Kas**, **saldo pembukaan**, **dashboard dari database**, serta **Budgeting HPP dan Canvas potong kertas**. Daftar pesanan/kas mendukung filter URL, pagination, soft-delete, dan ekspor Excel/CSV seluruh hasil filter. Dashboard diperbarui setelah mutasi, saat kembali ke tab, dan otomatis setiap 15 detik selama tab terlihat. Budgeting menyimpan seluruh komponen dan snapshot perhitungan, dengan keuntungan persen/nominal. Shell responsif berbahasa Indonesia. Laporan lengkap berbasis kas tersedia pada `/laporan`, dengan rincian produk, tiga kelompok beban, arus kas, analitik pos serta ekspor Excel sembilan worksheet dan CSV terstruktur. Tidak ada COA, jurnal, ledger, neraca posisi keuangan, atau payment gateway.
 
 Dokumen sumber tetap ada di [docs/README.md](docs/README.md). Baca [keputusan fondasi](docs/09-keputusan-teknis-tahap-1.md), [bukti tahap 1](docs/10-hasil-uji-tahap-1.md), [hasil tahap 2](docs/11-implementasi-dan-uji-tahap-2.md), [hasil tahap 3](docs/12-implementasi-dan-uji-tahap-3.md), serta [keputusan dan bukti tahap 4](docs/13-implementasi-dan-uji-tahap-4.md).
 
@@ -29,7 +29,7 @@ Untuk menghasilkan secret acak (salin hasilnya ke `AUTH_SECRET`, jangan commit):
 node -e "console.log(require('node:crypto').randomBytes(48).toString('base64url'))"
 ```
 
-4. Setelah target dan env benar, tinjau enam migration dalam `prisma/migrations`. Migration ketiga menambahkan kunci idempotensi kas; migration keempat menambahkan snapshot budgeting dan memperlebar tipe hasil potong/per-unit agar tidak overflow. Migration kelima (`20261112010000_expense_order_link`) mengizinkan pengeluaran ditautkan ke pesanan melalui kolom yang sudah ada, dengan mengganti satu constraint dalam transaksi SQL tanpa mengubah atau menghapus data lama. Terapkan migration ini sebelum menjalankan versi aplikasi yang mendukung tautan pengeluaran. Untuk **kedua target** gunakan deploy migration versioned berikut; tidak ada reset atau sinkronisasi schema destruktif:
+4. Setelah target dan env benar, tinjau seluruh migration versioned dalam `prisma/migrations`. Migration ketiga menambahkan kunci idempotensi kas; migration keempat menambahkan snapshot budgeting dan memperlebar tipe hasil potong/per-unit agar tidak overflow. Migration kelima (`20261112010000_expense_order_link`) mengizinkan pengeluaran ditautkan ke pesanan melalui kolom yang sudah ada, dengan mengganti satu constraint dalam transaksi SQL tanpa mengubah atau menghapus data lama. Terapkan migration ini sebelum menjalankan versi aplikasi yang mendukung tautan pengeluaran. Untuk **kedua target** gunakan deploy migration versioned berikut; tidak ada reset atau sinkronisasi schema destruktif:
 
 ```powershell
 npm.cmd run db:migrate:deploy
@@ -69,7 +69,7 @@ npm.cmd run build
 
 Build memakai Webpack secara eksplisit. Generate client, typegen, unit test, lint, dan build tidak membutuhkan database aktif. Folder `src/generated/prisma` dibuat saat instalasi/generate dan tidak perlu di-commit.
 
-Integration test database memerlukan PostgreSQL/Neon TEST yang sudah mendapat keenam migration. **Migration dan seed untuk uji tidak pernah otomatis diarahkan ke database aplikasi.** Pada shell khusus pengujian, set `TEST_DATABASE_URL` ke database TEST dan biarkan `DATABASE_URL` menunjuk database aplikasi yang berbeda. Jalankan:
+Integration test database memerlukan PostgreSQL/Neon TEST yang sudah mendapat seluruh migration versioned. **Migration dan seed untuk uji tidak pernah otomatis diarahkan ke database aplikasi.** Pada shell khusus pengujian, set `TEST_DATABASE_URL` ke database TEST dan biarkan `DATABASE_URL` menunjuk database aplikasi yang berbeda. Jalankan:
 
 ```powershell
 npm.cmd run test:integration
@@ -160,7 +160,7 @@ Menyimpan, mengubah atau menghapus budget **tidak mencatat kas**, mengubah harga
 
 Laporan memakai satu transaksi snapshot `RepeatableRead`. Saldo pembukaan tidak menjadi pendapatan; nilai pesanan/HPP tidak menjadi kas. Kuantitas terjual dijumlah dari penerimaan kas per satuan, nol eksplisit dipertahankan, kosong diberi penjelasan. DP/pelunasan tidak menyalin ulang kuantitas pesanan. Nama kategori historis dan kelompok biaya snapshot dipertahankan.
 
-Ekspor XLSX berisi **Ringkasan, Pendapatan, Pengeluaran, Arus Kas, Analitik Pos, Penyusutan**, dengan metadata periode, header beku, format Rupiah/persen, dan angka besar sebagai teks agar presisi tidak hilang. CSV UTF-8 BOM/CRLF berisi delapan bagian dalam 13 kolom; kontrak baris, aturan subtotal dan cara impor dijelaskan pada [panduan pengguna](docs/08-deploy-dan-user-guide.md#kontrak-csv-laporan). Teks formula dinetralkan, termasuk awalan kontrol/invisible. Ekspor ditolak dengan 409 bila revisi layar sudah berubah; muat ulang dan unduh kembali.
+Ekspor XLSX berisi **Ringkasan, Pendapatan, Pengeluaran, Arus Kas, Analitik Pos, Penyusutan, Piutang, Hutang, Pembayaran Tagihan**, dengan metadata periode, header beku, format Rupiah/persen, dan angka besar sebagai teks agar presisi tidak hilang. CSV UTF-8 BOM/CRLF memiliki 40 kolom: 13 kolom awal dipertahankan, diikuti rincian tagihan/pembayaran. Aturan pengelompokan dan pencegahan hitung ganda dijelaskan pada [ekspor tagihan dan laporan](#ekspor-tagihan-dan-laporan). Teks formula dinetralkan, termasuk awalan kontrol/invisible. Ekspor ditolak dengan 409 bila revisi layar sudah berubah; muat ulang dan unduh kembali.
 
 **Deployment dilakukan manual oleh pemilik ke Vercel + Neon; tidak dilakukan oleh agent.** Ikuti [setup, deploy manual, backup/restore dan panduan semua menu](docs/08-deploy-dan-user-guide.md). Build command `npm run build` sudah menjalankan Prisma generate dan Webpack; migrasi dan bootstrap dijalankan terpisah terhadap target yang sudah dipastikan benar. Jangan memasukkan migration/seed ke build Vercel. `APP_ORIGIN` harus persis domain HTTPS yang dipakai; preview memerlukan branch/origin/secret terpisah. Perubahan env memerlukan deployment baru.
 
@@ -180,11 +180,39 @@ Laporan dan ekspor CSV/Excel memisahkan selisih kas, pembelian aset tertaut, beb
 Sebelum menjalankan versi ini pada database yang dituju, terapkan migration versioned `20261113010000_fixed_assets` melalui `npm.cmd run db:migrate:deploy` setelah memastikan `DB_TARGET`, `DATABASE_URL`, dan `DIRECT_URL` sesuai target. Migration hanya menambahkan tabel aset beserta constraint dan relasinya; tidak melakukan reset, seed, atau mengubah isi transaksi lama.
 
 
-## Buku panduan edisi 2
+## Buku panduan edisi 4
 
 Tombol **Unduh Panduan** tetap memakai `output/pdf/buku-panduan-cv-ihsan-mandiri.pdf`.
-Edisi 2 (13 November 2026) berisi 31 halaman, dengan bab pengeluaran terkait pesanan,
-pencarian/ganti/lepas pesanan, Master Aset, pembelian aset tertaut, penyusutan,
-koreksi/penghentian, contoh selisih kas versus laba, serta ekspor enam worksheet.
+Edisi 4 (13 November 2026) berisi 40 halaman. Delapan bab Hutang-Piutang mencakup
+tagihan pelanggan/pemasok, angsuran, DP lama, koreksi, pembatalan, dan latihan saldo.
+Panduan pengeluaran terkait pesanan, Master Aset, penyusutan, contoh selisih kas
+versus laba, serta ekspor sembilan worksheet tersedia. Petunjuk Buku Kas ikut
+menjelaskan pembayaran tertaut agar tidak dicatat dua kali.
 Daftar isi, bookmark dan tautan kembali sudah mengikuti nomor halaman baru.
 Cara membangun ulang dan sumber PDF lama ada di `scripts/guides/README.md`.
+
+## Hutang-Piutang
+
+Menu **Hutang-Piutang** (`/hutang-piutang`) berada di bawah Buku Kas, dengan tab **Piutang Pelanggan** dan **Hutang Pemasok**. Daftar menyediakan pencarian, filter status, pagination, sisa tagihan, lewat jatuh tempo, dan jatuh tempo tujuh hari mendatang. Ringkasan mengikuti jenis/pencarian dan seluruh tagihan aktif; filter status hanya membatasi daftar.
+
+1. **Piutang:** pilih pesanan, isi nomor dan tanggal tagihan serta jatuh tempo. Pelanggan dan total diambil dari pesanan. Satu pesanan hanya boleh memiliki satu piutang aktif. Tagihan mencatat jumlah penuh; DP yang sudah ada ditautkan pada langkah berikutnya. Pesanan tidak otomatis dibuatkan tagihan.
+2. **Hutang:** isi nama pemasok, nomor nota, tanggal, jatuh tempo, total dan pos pengeluaran. Pesanan opsional. Ruang lingkupnya tagihan bahan/jasa; pinjaman uang dan cicilan aset belum termasuk.
+3. **Simpan tagihan:** saldo kas belum berubah. Buka **Detail → Catat pembayaran**, isi nominal yang benar-benar diterima/dibayar. Angsuran diperbolehkan sampai sisa nol. Pembayaran piutang otomatis membuat satu pemasukan penjualan; pembayaran hutang membuat satu pengeluaran dengan kelompok biaya saat tagihan dicatat. Kuantitas penjualan tidak dialokasikan ulang pada setiap angsuran.
+4. **DP/pembayaran lama:** gunakan **Hubungkan pembayaran lama**. Sistem menawarkan transaksi aktif yang belum tertaut, sesuai jenis, kategori/pos dan pesanan, bukan pembelian aset, serta nominalnya tidak melebihi sisa. Satu transaksi ditautkan utuh ke satu tagihan. Saldo kas tidak dicatat lagi. Periksa pembayaran lama sebelum membuat pembayaran baru untuk menghindari pencatatan manual ganda.
+5. **Koreksi:** jatuh tempo, nomor, catatan dan rincian yang diizinkan bisa diperbaiki. Total hutang tidak boleh di bawah pembayaran aktif. Pelanggan/nilai piutang mengikuti pesanan. Tautan pesanan/pos tidak diganti lewat koreksi; gunakan pembatalan dan tagihan baru bila salah tautan.
+6. **Pembayaran salah:** buka riwayat dan pilih **Batalkan pembayaran** untuk pembayaran baru; kas yang dibuat dari pembayaran tersebut ikut dinonaktifkan. **Lepaskan tautan** untuk pembayaran lama hanya mengubah sisa tagihan, sementara transaksi kas lama tetap aktif. Keduanya membutuhkan alasan dan menyimpan riwayat.
+7. **Tagihan batal:** batalkan/lepaskan semua pembayaran dahulu, lalu **Batalkan tagihan** dengan alasan. Riwayat dapat dicari melalui filter **Dibatalkan**. Nomor tagihan yang sudah digunakan tetap dicadangkan; gunakan nomor baru bila membuat ulang.
+
+Kas yang tertaut dilindungi dari edit/hapus langsung; Buku Kas menyediakan **Buka tagihan**. Perubahan harga/pelanggan/kategori/jumlah pesanan dengan piutang aktif dan penghapusan pesanan dengan tagihan aktif ditolak. Pos pengeluaran yang sudah digunakan tagihan diarsipkan saat dihapus. Semua pembayaran, pembatalan dan perubahan sisa berlangsung atomik dengan pemeriksaan revisi dan kunci permintaan untuk mencegah pengiriman ulang menjadi transaksi ganda.
+
+Laporan kas dan laba/rugi dengan penyusutan tetap menggunakan kas aktif; tagihan belum dibayar tidak otomatis masuk pendapatan/beban. Daftar ini memantau tagihan, termasuk pesanan yang belum diserahkan, sehingga tidak menjadikan laporan akrual penuh. Piutang/hutang lama tidak dikonversi otomatis dari transaksi atau pesanan yang sudah ada.
+
+Migration `20261113020000_trade_invoices` hanya menambah enum, dua tabel, indeks dan constraint. Tidak ada reset, seed, pengubahan isi transaksi lama, atau variabel lingkungan baru. Terapkan dengan prosedur migrasi versioned pada target yang sudah diperiksa dan memiliki cadangan yang dapat dipulihkan; pengujian database QA lokal tidak berarti migration sudah diterapkan ke Neon.
+
+### Ekspor tagihan dan laporan
+
+Menu Hutang-Piutang menyediakan **Excel (.xlsx)** dan **CSV (.csv)** untuk seluruh hasil tab, pencarian dan status yang sudah diterapkan, termasuk hasil di halaman berikutnya. Excel berisi **Tagihan, Pembayaran, Keterangan**. CSV memakai 27 kolom dengan `jenis_baris=TAGIHAN` atau `PEMBAYARAN`; total/dibayar/sisa hanya pada baris tagihan dan nominal pembayaran hanya pada baris pembayaran. Riwayat pembayaran dibatalkan/tautan dilepas tetap disertakan dengan status dan alasan. Saring status sebelum menjumlah; nominal pembayaran sudah masuk Buku Kas.
+
+Excel laporan lengkap mempertahankan enam worksheet lama dan menambah **Piutang, Hutang, Pembayaran Tagihan**. Tagihan aktif dihitung sampai tanggal akhir laporan, termasuk tagihan dari periode sebelumnya; pembayaran setelah akhir periode belum mengurangi saldo historis. Koreksi/pembatalan mengikuti data aktif terkini, sebagaimana laporan kas, sehingga ini bukan arsip audit kondisi database di masa lalu. Worksheet pembayaran hanya berisi pembayaran aktif bertanggal kas dalam periode, termasuk DP lama yang sudah ditautkan. Pembayaran tidak dijumlah ulang ke kas/laba rugi dan penyusutan tidak berubah.
+
+CSV laporan mempunyai **40 kolom**: 13 kolom lama tetap pada urutan yang sama, diikuti 27 kolom rincian tagihan/pembayaran. Bagian tambahan adalah `tagihan_piutang`, `tagihan_hutang`, `pembayaran_tagihan`; bagian kosong tidak menambah baris data semu. Rincian tagihan memakai kolom nilai/dibayar/sisa; rincian pembayaran memakai `nominal_pembayaran`, sementara `nominal` kas pada baris tersebut dikosongkan. Fingerprint revisi laporan ikut memperhitungkan perubahan tagihan. Ekspor Buku Kas juga menambah **Kode Tagihan** dan **Nomor Tagihan** setelah kolom lama. Penyesuaian ekspor tidak menambah migrasi database.

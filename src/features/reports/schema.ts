@@ -140,6 +140,10 @@ export type DailyCashFlow = {
   closingBalance: string | null;
 };
 export type ReportData = {
+  trade: import("@/features/trade/export-data").TradeExportData & {
+    receivableRemaining: string;
+    payableRemaining: string;
+  };
   assets: {
     rows: {
       id: string;

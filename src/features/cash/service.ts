@@ -22,11 +22,18 @@ import {
 } from "./schema";
 
 const include = {
+  invoicePayments: {
+    where: { voidedAt: null },
+    take: 1,
+    select: { invoice: { select: { id: true, reference: true } } },
+  },
   expensePost: { select: { name: true } },
   order: { select: { orderNumber: true, customerName: true } },
 } as const;
 type StoredCash = Prisma.CashTransactionGetPayload<{ include: typeof include }>;
 const serialize = (row: StoredCash): CashRow => ({
+  linkedInvoiceId: row.invoicePayments[0]?.invoice.id ?? null,
+  linkedInvoiceReference: row.invoicePayments[0]?.invoice.reference ?? null,
   id: row.id,
   transactionDate: dateOnly(row.transactionDate),
   type: row.type,
@@ -122,6 +129,15 @@ async function valuesFor(
   old: StoredCash | null,
 ) {
   if (old) {
+    if (
+      await tx.tradePayment.findFirst({
+        where: { cashId: old.id, voidedAt: null },
+      })
+    )
+      throw new AppError(
+        "Transaksi merupakan pembayaran Hutang-Piutang. Batalkan pembayaran atau lepaskan tautannya melalui detail tagihan sebelum mengubah Buku Kas.",
+        409,
+      );
     const asset = await tx.fixedAsset.findUnique({
       where: { purchaseCashId: old.id },
     });
@@ -319,6 +335,13 @@ export async function editCash(id: string, input: unknown) {
 export async function deleteCash(id: string, input: unknown) {
   const { updatedAt } = removeCashSchema.parse(input);
   return serializable(getDb(), async (tx) => {
+    if (
+      await tx.tradePayment.findFirst({ where: { cashId: id, voidedAt: null } })
+    )
+      throw new AppError(
+        "Transaksi merupakan pembayaran Hutang-Piutang. Batalkan pembayaran atau lepaskan tautannya melalui detail tagihan sebelum menghapus Buku Kas.",
+        409,
+      );
     if (await tx.fixedAsset.findUnique({ where: { purchaseCashId: id } }))
       throw new AppError(
         "Transaksi tertaut ke Master Aset. Koreksi tautan aset sebelum menghapus transaksi.",
