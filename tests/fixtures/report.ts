@@ -1,6 +1,12 @@
 import type { ReportData } from "@/features/reports/schema";
 export function reportFixture(): ReportData {
   return {
+    assets: {
+      rows: [],
+      depreciation: "0",
+      purchases: "0",
+      adjustedNet: "600000",
+    },
     period: {
       filters: { mode: "month", month: 11, year: 2026 },
       start: "2026-11-01",

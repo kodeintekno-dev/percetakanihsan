@@ -140,6 +140,18 @@ export type DailyCashFlow = {
   closingBalance: string | null;
 };
 export type ReportData = {
+  assets: {
+    rows: {
+      id: string;
+      name: string;
+      amount: string;
+      accumulated: string;
+      bookValue: string;
+    }[];
+    depreciation: string;
+    purchases: string;
+    adjustedNet: string;
+  };
   period: ReportPeriod;
   finance: FinanceSummary;
   opening: { date: string; amount: string } | null;

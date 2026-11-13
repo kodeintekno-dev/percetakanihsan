@@ -45,7 +45,7 @@ export function reportFlatRows(data: ReportData): ExportCell[][] {
     {
       section: "metadata",
       sub: "basis",
-      name: "Laporan Keuangan Sederhana (Berbasis Kas)",
+      name: "Laporan Keuangan: Kas & Penyusutan",
     },
     {
       section: "metadata",
@@ -225,6 +225,47 @@ export function reportFlatRows(data: ReportData): ExportCell[][] {
       amount: post.amount,
       percent: post.percent,
     });
+  rows.push(
+    {
+      section: "laba_rugi",
+      sub: "pembelian_aset",
+      name: "Pembelian aset tertaut dikeluarkan dari beban",
+      amount: data.assets.purchases,
+    },
+    {
+      section: "laba_rugi",
+      sub: "penyusutan",
+      name: "Beban penyusutan nonkas",
+      amount: data.assets.depreciation,
+    },
+    {
+      section: "laba_rugi",
+      sub: "setelah_penyesuaian",
+      name: "Laba/rugi setelah penyesuaian aset",
+      amount: data.assets.adjustedNet,
+    },
+  );
+  for (const a of data.assets.rows)
+    rows.push(
+      {
+        section: "penyusutan_aset",
+        sub: "beban_periode",
+        name: a.name,
+        amount: a.amount,
+      },
+      {
+        section: "penyusutan_aset",
+        sub: "akumulasi",
+        name: a.name,
+        amount: a.accumulated,
+      },
+      {
+        section: "penyusutan_aset",
+        sub: "nilai_buku",
+        name: a.name,
+        amount: a.bookValue,
+      },
+    );
   return rows.map((r) => [
     r.section,
     r.sub,
@@ -257,7 +298,7 @@ export async function reportsXlsx(data: ReportData) {
     book = new ExcelJS.Workbook();
   book.creator = "CV Ihsan Mandiri";
   book.created = new Date(data.generatedAt);
-  book.subject = "Laporan Keuangan Sederhana Berbasis Kas";
+  book.subject = "Laporan Keuangan: Kas & Penyusutan";
   const revenue: ExportCell[][] = [];
   for (const row of data.income.sales) {
     revenue.push([
@@ -382,7 +423,7 @@ export async function reportsXlsx(data: ReportData) {
         ),
         [
           "Laba rugi",
-          "Laba/rugi sederhana (Rp)",
+          "Selisih kas sebelum penyesuaian (Rp)",
           n(f.net),
           "Pendapatan kas dikurangi seluruh beban",
         ],
@@ -405,6 +446,24 @@ export async function reportsXlsx(data: ReportData) {
           "Saldo akhir periode (Rp)",
           n(f.closingBalance),
           reportBalanceNote(f) || "Saldo awal + kas masuk - kas keluar",
+        ],
+        [
+          "Penyesuaian laba rugi",
+          "Pembelian aset tertaut (Rp)",
+          n(data.assets.purchases),
+          "Dikeluarkan dari beban; kas keluar tetap tercatat",
+        ],
+        [
+          "Penyesuaian laba rugi",
+          "Beban penyusutan (Rp)",
+          n(data.assets.depreciation),
+          "Nonkas, tidak mengurangi saldo Buku Kas",
+        ],
+        [
+          "Penyesuaian laba rugi",
+          "Laba/rugi setelah penyesuaian (Rp)",
+          n(data.assets.adjustedNet),
+          "Selisih kas + pembelian aset tertaut - penyusutan",
         ],
       ],
       notes: [
@@ -542,6 +601,37 @@ export async function reportsXlsx(data: ReportData) {
     },
   ];
   const chunk = 1_048_560;
+  specs.push({
+    name: "Penyusutan",
+    headers: [
+      "Aset",
+      "Beban periode (Rp)",
+      "Akumulasi (Rp)",
+      "Nilai buku (Rp)",
+    ],
+    widths: [40, 25, 25, 25],
+    money: [1, 2, 3],
+    rows: [
+      ...data.assets.rows.map((a) => [
+        a.name,
+        n(a.amount),
+        n(a.accumulated),
+        n(a.bookValue),
+      ]),
+      ["Total beban penyusutan", n(data.assets.depreciation), null, null],
+      [
+        "Pembelian aset tertaut (penyesuaian beban)",
+        n(data.assets.purchases),
+        null,
+        null,
+      ],
+      ["Laba/rugi setelah penyesuaian", n(data.assets.adjustedNet), null, null],
+    ],
+    notes: [
+      "Penyusutan adalah beban nonkas; saldo Buku Kas tetap. Beban satu bulan penuh pada akhir bulan sejak aset siap dipakai, termasuk bulan penghentian.",
+    ],
+  });
+
   for (const spec of specs)
     for (
       let part = 0;
@@ -565,7 +655,7 @@ export async function reportsXlsx(data: ReportData) {
       sheet.columns = spec.widths.map((width) => ({ width }));
       for (const [index, text] of [
         "CV Ihsan Mandiri",
-        `${spec.name} · Laporan Keuangan Sederhana (Berbasis Kas)`,
+        `${spec.name} · Laporan Keuangan: Kas & Penyusutan`,
         `Periode: ${data.period.label} | ${data.period.start} – ${data.period.end} (WIB)`,
         `Dibuat: ${new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "long", timeZone: "Asia/Jakarta" }).format(book.created)}`,
       ].entries()) {

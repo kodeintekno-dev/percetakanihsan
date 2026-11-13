@@ -121,6 +121,19 @@ async function valuesFor(
   data: CashInput,
   old: StoredCash | null,
 ) {
+  if (old) {
+    const asset = await tx.fixedAsset.findUnique({
+      where: { purchaseCashId: old.id },
+    });
+    if (
+      asset &&
+      (data.type !== "EXPENSE" || !asset.acquisitionCost.eq(data.amount))
+    )
+      throw new AppError(
+        "Transaksi pembelian aset tertaut harus tetap pengeluaran dengan nominal sesuai harga perolehan. Koreksi tautannya di Master Aset terlebih dahulu.",
+        409,
+      );
+  }
   const opening = await tx.cashOpeningSetting.findUnique({ where: { id: 1 } });
   if (
     opening?.isConfigured &&
@@ -148,7 +161,8 @@ async function valuesFor(
         where: { id: data.orderId, deletedAt: null },
         select: { id: true },
       });
-      if (!order) issue("orderId", "Pesanan tidak ditemukan atau sudah dihapus.");
+      if (!order)
+        issue("orderId", "Pesanan tidak ditemukan atau sudah dihapus.");
     }
   } else if (data.incomeKind === "SALE") {
     const parent = await tx.productCategory.findUnique({
@@ -305,6 +319,11 @@ export async function editCash(id: string, input: unknown) {
 export async function deleteCash(id: string, input: unknown) {
   const { updatedAt } = removeCashSchema.parse(input);
   return serializable(getDb(), async (tx) => {
+    if (await tx.fixedAsset.findUnique({ where: { purchaseCashId: id } }))
+      throw new AppError(
+        "Transaksi tertaut ke Master Aset. Koreksi tautan aset sebelum menghapus transaksi.",
+        409,
+      );
     const old = current(
       await tx.cashTransaction.findUnique({ where: { id }, include }),
       updatedAt,

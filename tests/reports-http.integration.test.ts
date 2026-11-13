@@ -247,6 +247,7 @@ describe.skipIf(!base || !email || !password || !url)(
         "Pengeluaran",
         "Arus Kas",
         "Analitik Pos",
+        "Penyusutan",
       ]);
       expect(book.getWorksheet("Arus Kas")!.getCell("G8").value).toBe(2600000);
     });

@@ -5,6 +5,8 @@ import { ExactDecimal } from "@/lib/money";
 import { databaseDate, dateOnly } from "@/lib/date";
 import { financialSummary } from "@/features/cash/aggregates";
 import { AppError } from "@/lib/app-error";
+import { serializeAsset } from "@/features/assets/service";
+import { assetDepreciation } from "@/features/assets/depreciation";
 import {
   reportPeriod,
   reportFilterSchema,
@@ -35,6 +37,29 @@ export async function getReport(filters: ReportFilters): Promise<ReportData> {
   return getDb().$transaction(
     async (tx) => {
       const finance = await financialSummary(tx, period.start, period.end);
+      const fixedAssets = await tx.fixedAsset.findMany();
+      const assetRows = fixedAssets.map((a) => ({
+        id: a.id,
+        name: a.name,
+        ...assetDepreciation(serializeAsset(a), period.start, period.end),
+      }));
+      const depreciation = assetRows
+        .reduce((s, a) => s.add(a.amount), new ExactDecimal(0))
+        .toFixed(0);
+      const acquisitions = await tx.cashTransaction.aggregate({
+        where: { ...active, type: "EXPENSE", purchasedAsset: { isNot: null } },
+        _sum: { amount: true },
+      });
+      const purchases = acquisitions._sum.amount?.toFixed(0) ?? "0";
+      const assets = {
+        rows: assetRows,
+        depreciation,
+        purchases,
+        adjustedNet: new ExactDecimal(finance.net)
+          .add(purchases)
+          .sub(depreciation)
+          .toFixed(0),
+      };
       const [
         opening,
         orderCount,
@@ -294,6 +319,7 @@ export async function getReport(filters: ReportFilters): Promise<ReportData> {
           503,
         );
       const result = {
+        assets,
         period,
         finance,
         opening: opening?.isConfigured

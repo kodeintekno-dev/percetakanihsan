@@ -321,7 +321,7 @@ describe.skipIf(!url)("RPT-01..10 pada PostgreSQL TEST nyata", () => {
     expect(r.daily).toHaveLength(0);
     const b = new ExcelJS.Workbook();
     await b.xlsx.load(Uint8Array.from(await reportsXlsx(r)).buffer);
-    expect(b.worksheets).toHaveLength(5);
+    expect(b.worksheets).toHaveLength(6);
     expect(reportsCsv(r)).toContain("2600000");
   });
   it("RPT-06: pembukaan belum diatur / periode sebelum efektif tidak mengarang saldo nol", async () => {
@@ -463,6 +463,7 @@ describe.skipIf(!url)("RPT-01..10 pada PostgreSQL TEST nyata", () => {
       "Pengeluaran",
       "Arus Kas",
       "Analitik Pos",
+      "Penyusutan",
     ]);
     expect(book.getWorksheet("Ringkasan")!.getCell("C7").value).toBe(1300001);
     await saveCategory({ name: `${prefix}-utama`, parentId: null }, root);

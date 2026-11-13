@@ -35,6 +35,7 @@ const groups = [
     items: [
       { href: "/kategori-produk", label: "Kategori Produk", icon: Tags },
       { href: "/pos-pengeluaran", label: "Pos Pengeluaran", icon: Shapes },
+      { href: "/aset", label: "Master Aset", icon: Printer },
       { href: "/pengaturan", label: "Pengaturan Kas", icon: Settings },
     ],
   },

@@ -1,0 +1,148 @@
+.asset-form,
+.asset-card {
+  padding: 24px;
+  margin: 20px 0;
+  min-width: 0;
+}
+.asset-form label {
+  display: grid;
+  gap: 7px;
+  font-size: 12px;
+  min-width: 0;
+}
+.asset-form input,
+.asset-form select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: white;
+  color: var(--ink);
+}
+.asset-form .form-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+@media (max-width: 600px) {
+  .asset-form .form-columns {
+    grid-template-columns: 1fr;
+  }
+}
+.asset-guidance {
+  margin: 20px 0;
+}
+.asset-guidance a {
+  text-decoration: underline;
+}
+.asset-hint,
+.asset-purchase p,
+.asset-purchase small,
+.asset-card small {
+  font-size: 12px;
+  color: #64756d;
+}
+.asset-purchase {
+  margin: 20px 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  min-width: 0;
+}
+.asset-purchase legend {
+  font-weight: 600;
+  font-size: 13px;
+}
+.asset-search {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.asset-search input {
+  min-width: 0;
+  flex: 1;
+}
+.asset-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.asset-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.asset-card {
+  margin: 0;
+}
+.asset-card-heading,
+.asset-list-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.asset-card h3 {
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+.asset-card > p,
+.asset-list-heading > span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.asset-card dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.asset-card dt {
+  font-size: 11px;
+  color: var(--muted);
+}
+.asset-card dd {
+  margin: 4px 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.asset-card form {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.asset-card label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+}
+.asset-card input {
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  min-width: 0;
+  max-width: 100%;
+}
+.asset-card form button {
+  margin-top: 12px;
+  width: 100%;
+}
+@media (max-width: 760px) {
+  .asset-grid {
+    grid-template-columns: 1fr;
+  }
+  .asset-form,
+  .asset-card {
+    padding: 18px;
+  }
+  .asset-search {
+    flex-direction: column;
+  }
+  .asset-list-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .asset-card dl {
+    grid-template-columns: 1fr;
+  }
+}

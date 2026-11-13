@@ -110,6 +110,7 @@ describe("RPT-08: isi dan struktur berkas laporan lengkap", () => {
       "Pengeluaran",
       "Arus Kas",
       "Analitik Pos",
+      "Penyusutan",
     ]);
     expect(b.getWorksheet("Ringkasan")!.getCell("A1").value).toBe(
       "CV Ihsan Mandiri",
@@ -211,7 +212,7 @@ describe("RPT-08: isi dan struktur berkas laporan lengkap", () => {
     ).toMatchObject({ saldo_awal: "", saldo_akhir: "" });
     const book = new ExcelJS.Workbook();
     await book.xlsx.load(Uint8Array.from(await reportsXlsx(d)).buffer);
-    expect(book.worksheets).toHaveLength(5);
+    expect(book.worksheets).toHaveLength(6);
     expect(book.getWorksheet("Arus Kas")!.getCell("F8").value).toBeNull();
     d.finance.income = "1000000000000000000";
     await book.xlsx.load(Uint8Array.from(await reportsXlsx(d)).buffer);

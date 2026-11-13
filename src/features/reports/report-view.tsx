@@ -140,8 +140,8 @@ export function ReportView({ data }: { data: ReportData }) {
     <>
       <PageHeading
         eyebrow="LAPORAN USAHA"
-        title="Laporan Keuangan Sederhana (Berbasis Kas)"
-        description={`${data.period.label} · ${displayDate(data.period.start)}–${displayDate(data.period.end)} WIB. Seluruh nilai uang berasal dari transaksi kas aktif.`}
+        title="Laporan Keuangan: Kas & Penyusutan"
+        description={`${data.period.label} · ${displayDate(data.period.start)}–${displayDate(data.period.end)} WIB. Kas berasal dari transaksi aktif; penyusutan dihitung dari Master Aset untuk periode yang dipilih.`}
         action={
           <div className="report-export-buttons">
             <button disabled={pending} onClick={() => void download("xlsx")}>
@@ -485,11 +485,12 @@ export function ReportView({ data }: { data: ReportData }) {
       </section>
       <section className="panel report-panel" aria-labelledby="report-profit">
         <div className="report-section-heading">
-          <h2 id="report-profit">Laba/rugi sederhana berbasis kas</h2>
+          <h2 id="report-profit">Laba/rugi dengan penyusutan</h2>
         </div>
         <p className="report-hint">
-          Ringkasan operasional kas tercatat. Semua pemasukan termasuk lain-lain
-          dihitung; estimasi HPP tidak menjadi beban otomatis.
+          Pendapatan dan biaya menggunakan kas tercatat, disesuaikan pembelian
+          aset tertaut dan penyusutan nonkas. Laporan ini belum merupakan
+          laporan akrual penuh. Penyusutan tidak mengurangi saldo kas.
         </p>
         <dl className="report-profit">
           <div>
@@ -508,13 +509,58 @@ export function ReportView({ data }: { data: ReportData }) {
             </div>
           ))}
           <div className="report-net">
-            <dt>Selisih / laba (rugi) sederhana</dt>
+            <dt>Selisih kas sebelum penyesuaian</dt>
             <dd className={netSign < 0 ? "cash-expense" : "cash-income"}>
               {netSign > 0 ? "+" : ""}
               {formatRupiah(f.net)}
             </dd>
           </div>
+          <div>
+            <dt>Pembelian aset tertaut — dikeluarkan dari beban</dt>
+            <dd>+{formatRupiah(data.assets.purchases)}</dd>
+          </div>
+          <div>
+            <dt>Beban penyusutan (nonkas)</dt>
+            <dd>−{formatRupiah(data.assets.depreciation)}</dd>
+          </div>
+          <div className="report-net">
+            <dt>Laba/rugi setelah penyesuaian</dt>
+            <dd
+              className={
+                new ExactDecimal(data.assets.adjustedNet).isNegative()
+                  ? "cash-expense"
+                  : "cash-income"
+              }
+            >
+              {formatRupiah(data.assets.adjustedNet)}
+            </dd>
+          </div>
         </dl>
+        <h3>Rincian penyusutan aset</h3>
+        <p className="report-hint">
+          Garis lurus, nilai sisa nol. Beban satu bulan penuh diakui pada
+          tanggal akhir bulan, sejak bulan mulai digunakan. Bulan penghentian
+          masih dihitung. <Link href="/aset">Kelola Master Aset</Link>.
+        </p>
+        {data.assets.rows.length ? (
+          data.assets.rows.map((a) => (
+            <div className="report-subtotal" key={a.id}>
+              <span>
+                {a.name}
+                <small style={{ display: "block" }}>
+                  Akumulasi: {formatRupiah(a.accumulated)} · Nilai buku:{" "}
+                  {formatRupiah(a.bookValue)}
+                </small>
+              </span>
+              <strong>{formatRupiah(a.amount)}</strong>
+            </div>
+          ))
+        ) : (
+          <p className="report-empty">
+            Belum ada aset. Tambahkan aset di Master Aset untuk menghitung
+            penyusutan.
+          </p>
+        )}
       </section>
       <section className="panel report-panel" aria-labelledby="report-flow">
         <div className="report-section-heading">
@@ -658,8 +704,9 @@ export function ReportView({ data }: { data: ReportData }) {
         )}
       </section>
       <p className="report-hint">
-        Ekspor Excel mencakup Ringkasan, Pendapatan, Pengeluaran, Arus Kas, dan
-        Analitik Pos. CSV menyimpan seluruh bagian dalam tabel terstruktur.
+        Ekspor Excel mencakup Ringkasan, Pendapatan, Pengeluaran, Arus Kas,
+        Analitik Pos, dan Penyusutan. CSV menyimpan seluruh bagian dalam tabel
+        terstruktur.
       </p>
     </>
   );

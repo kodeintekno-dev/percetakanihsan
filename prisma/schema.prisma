@@ -148,6 +148,7 @@ model PrintOrder {
 }
 
 model CashTransaction {
+  purchasedAsset       FixedAsset?
   id                   String           @id @default(cuid())
   requestKey           String?          @unique
   requestHash          String?
@@ -178,6 +179,19 @@ model CashTransaction {
   @@index([categoryId, transactionDate])
   @@index([subcategoryId])
   @@index([orderId])
+}
+
+model FixedAsset {
+  id              String           @id @default(cuid())
+  name            String
+  acquisitionCost Decimal          @db.Decimal(18, 0)
+  startDate       DateTime         @db.Date
+  usefulMonths    Int
+  stopDate        DateTime?        @db.Date
+  purchaseCashId  String?          @unique
+  purchaseCash    CashTransaction? @relation(fields: [purchaseCashId], references: [id], onDelete: Restrict)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 }
 
 model CashOpeningSetting {

@@ -2,7 +2,7 @@
 
 Aplikasi internal percetakan dengan **Next.js App Router 16.4.4, TypeScript, React 19, Prisma 7.10.1, dan Neon PostgreSQL**. Node.js minimal 22.12; pengujian memakai Node 24.21.0 dan npm 11.19.0. Versi paket terpasang dibukukan di `package-lock.json`; gunakan `npm ci` pada instalasi berikutnya.
 
-Tersedia login/logout admin, kategori produk/jasa dua level, pos pengeluaran, **manajemen permintaan cetak**, **Buku Kas**, **saldo pembukaan**, **dashboard dari database**, serta **Budgeting HPP dan Canvas potong kertas**. Daftar pesanan/kas mendukung filter URL, pagination, soft-delete, dan ekspor Excel/CSV seluruh hasil filter. Dashboard diperbarui setelah mutasi, saat kembali ke tab, dan otomatis setiap 15 detik selama tab terlihat. Budgeting menyimpan seluruh komponen dan snapshot perhitungan, dengan keuntungan persen/nominal. Shell responsif berbahasa Indonesia. Laporan lengkap berbasis kas tersedia pada `/laporan`, dengan rincian produk, tiga kelompok beban, arus kas, analitik pos serta ekspor Excel lima worksheet dan CSV terstruktur. Tidak ada COA, jurnal, ledger, neraca posisi keuangan, atau payment gateway.
+Tersedia login/logout admin, kategori produk/jasa dua level, pos pengeluaran, **manajemen permintaan cetak**, **Buku Kas**, **saldo pembukaan**, **dashboard dari database**, serta **Budgeting HPP dan Canvas potong kertas**. Daftar pesanan/kas mendukung filter URL, pagination, soft-delete, dan ekspor Excel/CSV seluruh hasil filter. Dashboard diperbarui setelah mutasi, saat kembali ke tab, dan otomatis setiap 15 detik selama tab terlihat. Budgeting menyimpan seluruh komponen dan snapshot perhitungan, dengan keuntungan persen/nominal. Shell responsif berbahasa Indonesia. Laporan lengkap berbasis kas tersedia pada `/laporan`, dengan rincian produk, tiga kelompok beban, arus kas, analitik pos serta ekspor Excel enam worksheet dan CSV terstruktur. Tidak ada COA, jurnal, ledger, neraca posisi keuangan, atau payment gateway.
 
 Dokumen sumber tetap ada di [docs/README.md](docs/README.md). Baca [keputusan fondasi](docs/09-keputusan-teknis-tahap-1.md), [bukti tahap 1](docs/10-hasil-uji-tahap-1.md), [hasil tahap 2](docs/11-implementasi-dan-uji-tahap-2.md), [hasil tahap 3](docs/12-implementasi-dan-uji-tahap-3.md), serta [keputusan dan bukti tahap 4](docs/13-implementasi-dan-uji-tahap-4.md).
 
@@ -29,7 +29,7 @@ Untuk menghasilkan secret acak (salin hasilnya ke `AUTH_SECRET`, jangan commit):
 node -e "console.log(require('node:crypto').randomBytes(48).toString('base64url'))"
 ```
 
-4. Setelah target dan env benar, tinjau lima migration dalam `prisma/migrations`. Migration ketiga menambahkan kunci idempotensi kas; migration keempat menambahkan snapshot budgeting dan memperlebar tipe hasil potong/per-unit agar tidak overflow. Migration kelima (`20261112010000_expense_order_link`) mengizinkan pengeluaran ditautkan ke pesanan melalui kolom yang sudah ada, dengan mengganti satu constraint dalam transaksi SQL tanpa mengubah atau menghapus data lama. Terapkan migration ini sebelum menjalankan versi aplikasi yang mendukung tautan pengeluaran. Untuk **kedua target** gunakan deploy migration versioned berikut; tidak ada reset atau sinkronisasi schema destruktif:
+4. Setelah target dan env benar, tinjau enam migration dalam `prisma/migrations`. Migration ketiga menambahkan kunci idempotensi kas; migration keempat menambahkan snapshot budgeting dan memperlebar tipe hasil potong/per-unit agar tidak overflow. Migration kelima (`20261112010000_expense_order_link`) mengizinkan pengeluaran ditautkan ke pesanan melalui kolom yang sudah ada, dengan mengganti satu constraint dalam transaksi SQL tanpa mengubah atau menghapus data lama. Terapkan migration ini sebelum menjalankan versi aplikasi yang mendukung tautan pengeluaran. Untuk **kedua target** gunakan deploy migration versioned berikut; tidak ada reset atau sinkronisasi schema destruktif:
 
 ```powershell
 npm.cmd run db:migrate:deploy
@@ -69,7 +69,7 @@ npm.cmd run build
 
 Build memakai Webpack secara eksplisit. Generate client, typegen, unit test, lint, dan build tidak membutuhkan database aktif. Folder `src/generated/prisma` dibuat saat instalasi/generate dan tidak perlu di-commit.
 
-Integration test database memerlukan PostgreSQL/Neon TEST yang sudah mendapat kelima migration. **Migration dan seed untuk uji tidak pernah otomatis diarahkan ke database aplikasi.** Pada shell khusus pengujian, set `TEST_DATABASE_URL` ke database TEST dan biarkan `DATABASE_URL` menunjuk database aplikasi yang berbeda. Jalankan:
+Integration test database memerlukan PostgreSQL/Neon TEST yang sudah mendapat keenam migration. **Migration dan seed untuk uji tidak pernah otomatis diarahkan ke database aplikasi.** Pada shell khusus pengujian, set `TEST_DATABASE_URL` ke database TEST dan biarkan `DATABASE_URL` menunjuk database aplikasi yang berbeda. Jalankan:
 
 ```powershell
 npm.cmd run test:integration
@@ -160,8 +160,31 @@ Menyimpan, mengubah atau menghapus budget **tidak mencatat kas**, mengubah harga
 
 Laporan memakai satu transaksi snapshot `RepeatableRead`. Saldo pembukaan tidak menjadi pendapatan; nilai pesanan/HPP tidak menjadi kas. Kuantitas terjual dijumlah dari penerimaan kas per satuan, nol eksplisit dipertahankan, kosong diberi penjelasan. DP/pelunasan tidak menyalin ulang kuantitas pesanan. Nama kategori historis dan kelompok biaya snapshot dipertahankan.
 
-Ekspor XLSX berisi **Ringkasan, Pendapatan, Pengeluaran, Arus Kas, Analitik Pos**, dengan metadata periode, header beku, format Rupiah/persen, dan angka besar sebagai teks agar presisi tidak hilang. CSV UTF-8 BOM/CRLF berisi tujuh bagian dalam 13 kolom; kontrak baris, aturan subtotal dan cara impor dijelaskan pada [panduan pengguna](docs/08-deploy-dan-user-guide.md#kontrak-csv-laporan). Teks formula dinetralkan, termasuk awalan kontrol/invisible. Ekspor ditolak dengan 409 bila revisi layar sudah berubah; muat ulang dan unduh kembali.
+Ekspor XLSX berisi **Ringkasan, Pendapatan, Pengeluaran, Arus Kas, Analitik Pos, Penyusutan**, dengan metadata periode, header beku, format Rupiah/persen, dan angka besar sebagai teks agar presisi tidak hilang. CSV UTF-8 BOM/CRLF berisi delapan bagian dalam 13 kolom; kontrak baris, aturan subtotal dan cara impor dijelaskan pada [panduan pengguna](docs/08-deploy-dan-user-guide.md#kontrak-csv-laporan). Teks formula dinetralkan, termasuk awalan kontrol/invisible. Ekspor ditolak dengan 409 bila revisi layar sudah berubah; muat ulang dan unduh kembali.
 
 **Deployment dilakukan manual oleh pemilik ke Vercel + Neon; tidak dilakukan oleh agent.** Ikuti [setup, deploy manual, backup/restore dan panduan semua menu](docs/08-deploy-dan-user-guide.md). Build command `npm run build` sudah menjalankan Prisma generate dan Webpack; migrasi dan bootstrap dijalankan terpisah terhadap target yang sudah dipastikan benar. Jangan memasukkan migration/seed ke build Vercel. `APP_ORIGIN` harus persis domain HTTPS yang dipakai; preview memerlukan branch/origin/secret terpisah. Perubahan env memerlukan deployment baru.
 
 [Hasil QA akhir dan matriks FR/RPT/OPS/SEC/UX](docs/14-hasil-qa-dan-serah-terima.md) membedakan PASS lokal dari verifikasi Neon/HTTPS/HP sungguhan yang belum dilakukan. Bukti unduhan dan screenshot berasal dari database TEST lokal, bukan data produksi. Audit npm runtime masih melaporkan dependency moderate pada rantai ExcelJS; detail dan batas penilaiannya dicatat di laporan. Tidak ada perubahan skema/migration pada tahap 5.
+
+
+## Master Aset dan penyusutan
+
+Menu `/aset` menyimpan nama aset, harga perolehan, tanggal siap digunakan, dan masa pakai dalam bulan. Metode garis lurus dengan nilai sisa nol: harga perolehan dibagi masa pakai. Beban satu bulan penuh diakui pada tanggal terakhir bulan sejak bulan siap digunakan; rentang tanggal yang belum mencapai akhir bulan tidak memuat beban bulan tersebut. Selisih pembulatan kumulatif memastikan total penyusutan tepat sama dengan harga perolehan. Penyusutan berhenti setelah masa pakai habis atau setelah bulan terakhir digunakan, tanpa menghapus riwayat aset.
+
+Pembelian yang telah dibayar melalui Buku Kas dapat ditautkan ke aset: satu transaksi pengeluaran aktif dengan nominal sama untuk satu aset. Pengeluaran tersebut tetap mengurangi kas, tetapi dikeluarkan dari beban saat menghitung laba rugi agar tidak dihitung dua kali bersama penyusutan. Untuk aset lama yang dibeli sebelum aplikasi digunakan, tautan dapat dikosongkan. Pembayaran pembelian secara cicilan belum didukung oleh tautan ini.
+
+Koreksi aset menghitung ulang laporan periode terkait; periksa bukti pembelian dan tanggal sebelum menyimpan. Saldo kas dan transaksi lama tidak diubah otomatis. Transaksi pembelian tertaut dilindungi dari penghapusan/perubahan nominal atau jenis; koreksi atau lepaskan tautan melalui Master Aset terlebih dahulu.
+
+Laporan dan ekspor CSV/Excel memisahkan selisih kas, pembelian aset tertaut, beban penyusutan nonkas, dan laba/rugi setelah penyesuaian. Excel memiliki worksheet tambahan `Penyusutan`. Laporan ini tetap menggunakan basis kas untuk pendapatan/biaya lainnya, belum merupakan laporan akrual penuh. Penyusutan tidak menjadi penerimaan modal atau penyisihan uang otomatis.
+
+Sebelum menjalankan versi ini pada database yang dituju, terapkan migration versioned `20261113010000_fixed_assets` melalui `npm.cmd run db:migrate:deploy` setelah memastikan `DB_TARGET`, `DATABASE_URL`, dan `DIRECT_URL` sesuai target. Migration hanya menambahkan tabel aset beserta constraint dan relasinya; tidak melakukan reset, seed, atau mengubah isi transaksi lama.
+
+
+## Buku panduan edisi 2
+
+Tombol **Unduh Panduan** tetap memakai `output/pdf/buku-panduan-cv-ihsan-mandiri.pdf`.
+Edisi 2 (13 November 2026) berisi 31 halaman, dengan bab pengeluaran terkait pesanan,
+pencarian/ganti/lepas pesanan, Master Aset, pembelian aset tertaut, penyusutan,
+koreksi/penghentian, contoh selisih kas versus laba, serta ekspor enam worksheet.
+Daftar isi, bookmark dan tautan kembali sudah mengikuti nomor halaman baru.
+Cara membangun ulang dan sumber PDF lama ada di `scripts/guides/README.md`.
