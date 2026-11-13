@@ -29,7 +29,7 @@ Untuk menghasilkan secret acak (salin hasilnya ke `AUTH_SECRET`, jangan commit):
 node -e "console.log(require('node:crypto').randomBytes(48).toString('base64url'))"
 ```
 
-4. Setelah target dan env benar, tinjau empat migration dalam `prisma/migrations`. Migration ketiga menambahkan kunci idempotensi kas; migration keempat menambahkan snapshot budgeting dan memperlebar tipe hasil potong/per-unit agar tidak overflow. Data lama dipertahankan. Untuk **kedua target** gunakan deploy migration versioned berikut; tidak ada reset atau sinkronisasi schema destruktif:
+4. Setelah target dan env benar, tinjau lima migration dalam `prisma/migrations`. Migration ketiga menambahkan kunci idempotensi kas; migration keempat menambahkan snapshot budgeting dan memperlebar tipe hasil potong/per-unit agar tidak overflow. Migration kelima (`20261112010000_expense_order_link`) mengizinkan pengeluaran ditautkan ke pesanan melalui kolom yang sudah ada, dengan mengganti satu constraint dalam transaksi SQL tanpa mengubah atau menghapus data lama. Terapkan migration ini sebelum menjalankan versi aplikasi yang mendukung tautan pengeluaran. Untuk **kedua target** gunakan deploy migration versioned berikut; tidak ada reset atau sinkronisasi schema destruktif:
 
 ```powershell
 npm.cmd run db:migrate:deploy
@@ -69,7 +69,7 @@ npm.cmd run build
 
 Build memakai Webpack secara eksplisit. Generate client, typegen, unit test, lint, dan build tidak membutuhkan database aktif. Folder `src/generated/prisma` dibuat saat instalasi/generate dan tidak perlu di-commit.
 
-Integration test database memerlukan PostgreSQL/Neon TEST yang sudah mendapat keempat migration. **Migration dan seed untuk uji tidak pernah otomatis diarahkan ke database aplikasi.** Pada shell khusus pengujian, set `TEST_DATABASE_URL` ke database TEST dan biarkan `DATABASE_URL` menunjuk database aplikasi yang berbeda. Jalankan:
+Integration test database memerlukan PostgreSQL/Neon TEST yang sudah mendapat kelima migration. **Migration dan seed untuk uji tidak pernah otomatis diarahkan ke database aplikasi.** Pada shell khusus pengujian, set `TEST_DATABASE_URL` ke database TEST dan biarkan `DATABASE_URL` menunjuk database aplikasi yang berbeda. Jalankan:
 
 ```powershell
 npm.cmd run test:integration

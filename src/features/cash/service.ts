@@ -143,6 +143,13 @@ async function valuesFor(
     if (!post || (!unchanged && !post.isActive))
       issue("expensePostId", "Pilih pos pengeluaran yang aktif.");
     expenseGroup = unchanged ? old!.expenseGroupSnapshot : post.group;
+    if (data.orderId) {
+      const order = await tx.printOrder.findFirst({
+        where: { id: data.orderId, deletedAt: null },
+        select: { id: true },
+      });
+      if (!order) issue("orderId", "Pesanan tidak ditemukan atau sudah dihapus.");
+    }
   } else if (data.incomeKind === "SALE") {
     const parent = await tx.productCategory.findUnique({
       where: { id: data.categoryId! },

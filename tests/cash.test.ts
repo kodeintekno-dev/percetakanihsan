@@ -80,6 +80,31 @@ describe("Validasi kas dan periode WIB", () => {
         .success,
     ).toBe(false);
   });
+  it("pengeluaran boleh terkait pesanan tanpa data penjualan; pemasukan OTHER tetap tidak boleh", () => {
+    const expense = {
+      type: "EXPENSE",
+      description: "Kertas pesanan pelanggan",
+      amount: "400000",
+      expensePostId: "p",
+    };
+    expect(cashSchema.parse(expense).orderId).toBeNull();
+    expect(cashSchema.parse({ ...expense, orderId: "order-1" }).orderId).toBe(
+      "order-1",
+    );
+    for (const extra of [
+      { incomeKind: "SALE" },
+      { categoryId: "c" },
+      { subcategoryId: "s" },
+      { soldQuantity: "1", soldUnit: "pcs" },
+    ])
+      expect(
+        cashSchema.safeParse({ ...expense, orderId: "order-1", ...extra })
+          .success,
+      ).toBe(false);
+    expect(cashSchema.safeParse({ ...other, orderId: "order-1" }).success).toBe(
+      false,
+    );
+  });
   it("rentang terbalik, parameter ganda dan pagination palsu ditolak", () => {
     expect(() =>
       parseCashFilters({ start: "2026-11-03", end: "2026-11-01" }),

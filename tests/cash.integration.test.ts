@@ -427,6 +427,89 @@ describe.skipIf(!url)("KAS-01..09 / FR-01 pada PostgreSQL TEST", () => {
     expect(unknown.soldQuantity).toBeNull();
     expect(unknown.orderNumber).toBe(o.orderNumber);
   });
+  it("pengeluaran dapat ditautkan, diganti pesanannya, dibuka ulang, dan dilepas tanpa mengubah alokasi penjualan", async () => {
+    const first = await order();
+    const second = await order({ categoryId: other, subcategoryId: null });
+    const original = await create(expense());
+    let linked = await editCash(original.id, {
+      data: expense({ orderId: first.id }),
+      updatedAt: original.updatedAt,
+    });
+    expect(await getCash(linked.id)).toMatchObject({
+      orderId: first.id,
+      orderNumber: first.orderNumber,
+      orderCustomerName: first.customerName,
+      expensePostId: production,
+      expenseGroupSnapshot: "PRODUCTION",
+      amount: "400000",
+      categoryId: null,
+      soldQuantity: null,
+    });
+    expect((await getOrderAllocation(first.id)).allocatedQuantity).toBe("0.000");
+    linked = await editCash(linked.id, {
+      data: expense({ orderId: second.id }),
+      updatedAt: linked.updatedAt,
+    });
+    const rows = await allFilteredCash(parseCashFilters({ type: "EXPENSE" }));
+    expect(rows.find((row) => row.id === linked.id)?.orderNumber).toBe(
+      second.orderNumber,
+    );
+    const csv = parse(cashCsv(rows), { bom: true, columns: true }) as Record<
+      string,
+      string
+    >[];
+    expect(
+      csv.find((row) => row["Kode Transaksi"] === linked.id)?.Pesanan,
+    ).toBe(second.orderNumber);
+    const book = new ExcelJS.Workbook();
+    await book.xlsx.load(
+      Uint8Array.from(await cashXlsx(rows, parseCashFilters({}))).buffer,
+    );
+    expect(book.getWorksheet("Buku Kas")!.getCell("K2").value).toBe(
+      second.orderNumber,
+    );
+    linked = await editCash(linked.id, {
+      data: expense(),
+      updatedAt: linked.updatedAt,
+    });
+    expect(linked.orderId).toBeNull();
+    const created = await create(expense({ orderId: first.id }));
+    expect(created.orderId).toBe(first.id);
+    expect(await getFinancialSummary("2020-11-01", "2020-11-30")).toMatchObject({
+      income: "0",
+      expense: "800000",
+      count: 2,
+      closingBalance: "1200000",
+    });
+  });
+  it("pesanan hilang/terhapus ditolak pada pengeluaran; hapus pesanan mempertahankan transaksi pengeluaran", async () => {
+    await expect(create(expense({ orderId: "missing" }))).rejects.toMatchObject({
+      status: 422,
+      fields: { orderId: expect.any(Array) },
+    });
+    const o = await order();
+    const linked = await create(expense({ orderId: o.id }));
+    await removeOrder(o.id, { updatedAt: o.updatedAt });
+    expect(await getCash(linked.id)).toMatchObject({
+      orderId: null,
+      amount: "400000",
+      expensePostId: production,
+    });
+    await expect(create(expense({ orderId: o.id }))).rejects.toMatchObject({
+      status: 422,
+    });
+  });
+  it("constraint database tetap menolak data penjualan pada pengeluaran terkait pesanan", async () => {
+    const o = await order();
+    const linked = await create(expense({ orderId: o.id }));
+    await expect(
+      getDb().cashTransaction.update({
+        where: { id: linked.id },
+        data: { soldQuantity: "1", soldUnit: "pcs" },
+      }),
+    ).rejects.toThrow();
+    expect((await getCash(linked.id)).soldQuantity).toBeNull();
+  });
   it("KAS-09: DP nol + pelunasan 100 tidak mengganda; edit mengecualikan diri sendiri; hapus melepas alokasi", async () => {
     const o = await order();
     await create(

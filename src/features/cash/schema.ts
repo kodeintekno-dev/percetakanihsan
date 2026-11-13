@@ -63,7 +63,6 @@ export const cashSchema = z
           data.incomeKind,
           data.categoryId,
           data.subcategoryId,
-          data.orderId,
           data.soldQuantity,
           data.soldUnit,
         ].some((v) => v !== null)

@@ -183,17 +183,17 @@ export function CashList({
                   ? "Kuantitas belum dicatat"
                   : `${formatQuantity(row.soldQuantity)} ${row.soldUnit} terjual`}
               </small>
-              {row.orderId && (
-                <Link
-                  className="cash-order-link"
-                  href={`/permintaan/${row.orderId}/edit`}
-                >
-                  {row.orderNumber} · {row.orderCustomerName}
-                </Link>
-              )}
             </>
           )}
         </>
+      )}
+      {row.orderId && (
+        <Link
+          className="cash-order-link"
+          href={`/permintaan/${row.orderId}/edit`}
+        >
+          {row.orderNumber} · {row.orderCustomerName}
+        </Link>
       )}
     </div>
   );

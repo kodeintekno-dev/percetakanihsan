@@ -2,21 +2,15 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  Save,
-  Search,
-  Unlink,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { ArrowLeft, Save, LoaderCircle } from "lucide-react";
 import { PageHeading } from "@/components/page-heading";
 import { formatRupiah, formatQuantity, ExactDecimal } from "@/lib/money";
 import { notifyDataChanged } from "@/lib/notify-data-changed";
 import type { CategoryRow } from "@/features/categories/schema";
 import { expenseGroups, type ExpenseRow } from "@/features/expenses/schema";
-import type { OrderRow, OrderPage } from "@/features/orders/schema";
+import type { OrderRow } from "@/features/orders/schema";
 import { cashTypes, incomeKinds, type CashRow } from "./schema";
+import { CashOrderPicker } from "./order-picker";
 type Allocation = {
   quantity: string;
   unit: string;
@@ -46,10 +40,10 @@ export function CashForm({
     [subId, setSubId] = useState(initial?.subcategoryId ?? ""),
     [postId, setPostId] = useState(initial?.expensePostId ?? "");
   const [order, setOrder] = useState<OrderRow | null>(initialOrder ?? null),
-    [allocation, setAllocation] = useState<Allocation | null>(null),
-    [orderQuery, setOrderQuery] = useState("");
-  const [results, setResults] = useState<OrderPage | null>(null),
-    [searching, setSearching] = useState(false);
+    [allocation, setAllocation] = useState<Allocation | null>(null);
+  const [loadingAllocation, setLoadingAllocation] = useState(false),
+    [allocationError, setAllocationError] = useState("");
+  const allocationRequest = useRef(0);
   const [soldUnit, setSoldUnit] = useState(initial?.soldUnit ?? ""),
     [amount, setAmount] = useState(initial?.amount ?? "");
   const [pending, setPending] = useState(false),
@@ -88,40 +82,23 @@ export function CashForm({
       "aria-describedby": fields[name] ? `${name}-error` : undefined,
     };
   }
-  async function searchOrders(page = 1) {
-    setSearching(true);
-    setError("");
-    try {
-      const params = new URLSearchParams({
-        q: orderQuery,
-        page: String(page),
-        pageSize: "10",
-      });
-      const response = await fetch(`/api/orders?${params}`);
-      const value = await response.json();
-      if (response.status === 401) {
-        router.replace("/login");
-        return;
-      }
-      if (!response.ok) {
-        setError(value.error);
-        return;
-      }
-      setResults(value);
-    } catch {
-      setError("Pesanan belum dapat dimuat. Coba cari kembali.");
-    } finally {
-      setSearching(false);
-    }
-  }
-  async function selectOrder(row: OrderRow) {
+  async function selectOrder(row: OrderRow | null) {
+    const request = ++allocationRequest.current;
     setOrder(row);
+    setAllocation(null);
+    setAllocationError("");
+    setLoadingAllocation(false);
+    setFields((current) => {
+      const next = { ...current };
+      delete next.orderId;
+      return next;
+    });
+    if (!row) return;
     setCategoryId(row.categoryId);
     setSubId(row.subcategoryId ?? "");
     setSoldUnit(row.unit);
-    setAllocation(null);
-    setSearching(true);
-    setError("");
+    if (!sale) return;
+    setLoadingAllocation(true);
     try {
       const excluded =
         initial?.orderId === row.id
@@ -131,21 +108,23 @@ export function CashForm({
         `/api/orders/${row.id}/allocation${excluded}`,
       );
       const value = await response.json();
+      if (request !== allocationRequest.current) return;
       if (response.status === 401) {
         router.replace("/login");
         return;
       }
       if (!response.ok) {
-        setError(value.error);
+        setAllocationError(value.error);
         return;
       }
       setAllocation(value);
     } catch {
-      setError(
-        "Sisa kuantitas belum dapat dimuat. Server tetap akan memeriksa alokasi saat disimpan.",
-      );
+      if (request === allocationRequest.current)
+        setAllocationError(
+          "Sisa kuantitas belum dapat dimuat. Pilih ulang pesanan untuk mencoba kembali.",
+        );
     } finally {
-      setSearching(false);
+      if (request === allocationRequest.current) setLoadingAllocation(false);
     }
   }
   async function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -163,7 +142,10 @@ export function CashForm({
       description: form.get("description"),
       amount: form.get("amount"),
       ...(transactionType === "EXPENSE"
-        ? { expensePostId: form.get("expensePostId") || null }
+        ? {
+            expensePostId: form.get("expensePostId") || null,
+            orderId: form.get("orderId") || null,
+          }
         : incomeKind === "OTHER"
           ? { incomeKind: "OTHER" }
           : {
@@ -384,8 +366,7 @@ export function CashForm({
                     onChange={(e) => {
                       setCategoryId(e.target.value);
                       setSubId("");
-                      setOrder(null);
-                      setAllocation(null);
+                      void selectOrder(null);
                     }}
                     {...attributes("categoryId")}
                   >
@@ -407,8 +388,7 @@ export function CashForm({
                     value={subId}
                     onChange={(e) => {
                       setSubId(e.target.value);
-                      setOrder(null);
-                      setAllocation(null);
+                      void selectOrder(null);
                     }}
                     {...attributes("subcategoryId")}
                   >
@@ -429,116 +409,48 @@ export function CashForm({
                   historis tetap disimpan bila kategori tidak diganti.
                 </p>
               )}
-              <div className="cash-order-picker">
-                <h3>Hubungkan pesanan (opsional)</h3>
-                <p className="muted cash-help">
-                  Cari nama pelanggan, produk, atau kode pesanan. Memilih
-                  pesanan menyesuaikan kategori; tidak menyalin kuantitas secara
-                  otomatis.
-                </p>
-                <div className="cash-order-search">
-                  <input
-                    aria-label="Cari pesanan"
-                    placeholder="Pelanggan atau kode pesanan"
-                    value={orderQuery}
-                    onChange={(e) => setOrderQuery(e.target.value)}
-                    maxLength={150}
-                  />
-                  <button
-                    className="button secondary"
-                    type="button"
-                    disabled={searching || pending}
-                    onClick={() => void searchOrders()}
-                  >
-                    <Search size={16} />
-                    {searching ? "Mencari…" : "Cari pesanan"}
-                  </button>
-                </div>
-                {results && (
-                  <div className="cash-order-results">
-                    {results.rows.length ? (
-                      results.rows.map((row) => (
-                        <button
-                          type="button"
-                          className="cash-order-option"
-                          key={row.id}
-                          disabled={pending || searching}
-                          onClick={() => void selectOrder(row)}
-                        >
-                          <strong>{row.customerName}</strong>
-                          <span>
-                            {row.productNameSnapshot} ·{" "}
-                            {formatQuantity(row.quantity)} {row.unit}
-                          </span>
-                          <small>{row.orderNumber}</small>
-                        </button>
-                      ))
-                    ) : (
-                      <p className="cash-help muted">
-                        Tidak ada pesanan aktif yang cocok.
-                      </p>
-                    )}
-                    <div className="cash-order-pagination">
-                      <button
-                        type="button"
-                        className="icon-button"
-                        aria-label="Pesanan sebelumnya"
-                        disabled={results.page <= 1 || searching}
-                        onClick={() => void searchOrders(results.page - 1)}
-                      >
-                        <ChevronLeft size={16} />
-                      </button>
-                      <span>
-                        Halaman {results.page} / {results.totalPages} ·{" "}
-                        {results.total} hasil
-                      </span>
-                      <button
-                        type="button"
-                        className="icon-button"
-                        aria-label="Pesanan berikutnya"
-                        disabled={
-                          results.page >= results.totalPages || searching
-                        }
-                        onClick={() => void searchOrders(results.page + 1)}
-                      >
-                        <ChevronRight size={16} />
-                      </button>
-                    </div>
-                  </div>
-                )}
-                <input type="hidden" name="orderId" value={order?.id ?? ""} />
-                {order && (
-                  <div className="cash-linked-order">
-                    <div>
-                      <strong>{order.customerName}</strong>
-                      <small>
-                        {order.orderNumber} · {formatQuantity(order.quantity)}{" "}
-                        {order.unit}
-                      </small>
-                      {allocation && (
-                        <small>
-                          Belum dialokasikan:{" "}
-                          {formatQuantity(allocation.remainingQuantity)}{" "}
-                          {allocation.unit} (penerimaan yang sedang diedit
-                          dikecualikan).
-                        </small>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      className="icon-button"
-                      aria-label="Lepaskan pesanan"
-                      onClick={() => {
-                        setOrder(null);
-                        setAllocation(null);
-                      }}
-                    >
-                      <Unlink size={18} />
-                    </button>
-                  </div>
-                )}
-                {field("orderId")}
-              </div>
+            </>
+          )}
+          {(sale || type === "EXPENSE") && (
+            <CashOrderPicker
+              order={order}
+              onChange={(row) => void selectOrder(row)}
+              disabled={pending}
+              error={fields.orderId?.[0]}
+              description={
+                type === "EXPENSE"
+                  ? "Tautkan biaya ini ke pesanan agar lebih mudah ditelusuri."
+                  : "Pilih pesanan untuk mengaitkan penerimaan dari pelanggan."
+              }
+            >
+              {sale &&
+                (loadingAllocation ? (
+                  <span role="status">
+                    <LoaderCircle
+                      size={14}
+                      className="cash-picker-spin"
+                      aria-hidden="true"
+                    />{" "}
+                    Memeriksa sisa kuantitas…
+                  </span>
+                ) : allocationError ? (
+                  <span role="alert" className="field-error">
+                    {allocationError}
+                  </span>
+                ) : allocation ? (
+                  <span>
+                    Belum dialokasikan:{" "}
+                    <strong>
+                      {formatQuantity(allocation.remainingQuantity)}{" "}
+                      {allocation.unit}
+                    </strong>
+                    {initial ? " (transaksi ini dikecualikan)." : "."}
+                  </span>
+                ) : null)}
+            </CashOrderPicker>
+          )}
+          {sale && (
+            <>
               <div className="form-columns">
                 <label>
                   Kuantitas terjual pada penerimaan ini (opsional)
@@ -599,7 +511,7 @@ export function CashForm({
           >
             Batal
           </Link>
-          <button type="submit" disabled={pending || searching}>
+          <button type="submit" disabled={pending || loadingAllocation}>
             <Save size={17} />
             {pending ? "Menyimpan…" : "Simpan transaksi"}
           </button>

@@ -312,6 +312,51 @@ describe.skipIf(!base || !email || !password || !url)(
         (await request(`/api/exports/cash?${query}&format=pdf`)).status,
       ).toBe(422);
     });
+    it("pengeluaran terkait pesanan tersimpan melalui HTTP, tampil saat edit dan dapat dilepas", async () => {
+      const orderResponse = await request("/api/orders", "POST", {
+        orderDate: todayJakarta(),
+        customerName: `${prefix}-expense`,
+        categoryId,
+        subcategoryId: null,
+        quantity: "100",
+        unit: "pcs",
+        unitPrice: "50000",
+        status: "NEW",
+      });
+      expect(orderResponse.status).toBe(201);
+      const { order } = await orderResponse.json();
+      orderIds.push(order.id);
+      const data = {
+        transactionDate: todayJakarta(),
+        type: "EXPENSE",
+        expensePostId: postId,
+        orderId: order.id,
+        description: `${prefix}-expense`,
+        amount: "400000",
+      };
+      const linked = await create(data);
+      expect(linked).toMatchObject({
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        incomeKind: null,
+        categoryId: null,
+        soldQuantity: null,
+      });
+      const editPage = await request(`/buku-kas/${linked.id}/edit`);
+      expect(editPage.status).toBe(200);
+      expect(await editPage.text()).toContain(order.orderNumber);
+      const edit = await request(`/api/cash-transactions/${linked.id}`, "PATCH", {
+        data: { ...data, orderId: null },
+        updatedAt: linked.updatedAt,
+      });
+      expect(edit.status).toBe(200);
+      expect((await edit.json()).transaction.orderId).toBeNull();
+      const invalid = await request("/api/cash-transactions", "POST", {
+        data: { ...data, orderId: "missing" },
+        requestKey: randomUUID(),
+      });
+      expect(invalid.status).toBe(422);
+    });
     it("pembukaan melalui HTTP memerlukan konfirmasi; tidak menambah pemasukan; agregasi bukan harga pesanan", async () => {
       const before = await (await request("/api/dashboard")).json(),
         state = await (await request("/api/cash-opening")).json();
