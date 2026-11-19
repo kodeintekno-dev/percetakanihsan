@@ -8,6 +8,7 @@ import { AppError } from "@/lib/app-error";
 import { serializeAsset } from "@/features/assets/service";
 import { assetDepreciation } from "@/features/assets/depreciation";
 import { reportTradeSnapshot } from "@/features/trade/export-data";
+import { readPreparation } from "./preparation-service";
 import {
   reportPeriod,
   reportFilterSchema,
@@ -39,7 +40,8 @@ export async function getReport(filters: ReportFilters): Promise<ReportData> {
     async (tx) => {
       const finance = await financialSummary(tx, period.start, period.end);
       const trade = await reportTradeSnapshot(tx, period.start, period.end);
-      const fixedAssets = await tx.fixedAsset.findMany();
+      const preparation = await readPreparation(tx, period.start, period.end);
+      const fixedAssets = await tx.fixedAsset.findMany({ where: { startDate: { lte: databaseDate(period.end) } }, orderBy: [{ startDate: "asc" }, { id: "asc" }] });
       const assetRows = fixedAssets.map((a) => ({
         id: a.id,
         name: a.name,
@@ -348,10 +350,21 @@ export async function getReport(filters: ReportFilters): Promise<ReportData> {
         posts: ranked,
         daily,
       };
-      return {
+      const sourceRevision = createHash("sha256").update(JSON.stringify(result)).digest("hex");
+      const stale = preparation.version > 0 && preparation.sourceRevision !== sourceRevision;
+      const prepared = {
         ...result,
+        sourceRevision,
+        preparation: {
+          ...preparation,
+          stale,
+          values: stale ? { ...preparation.values, classificationConfirmed: false, balanceConfirmed: false } : preparation.values,
+        },
+      };
+      return {
+        ...prepared,
         revision: createHash("sha256")
-          .update(JSON.stringify(result))
+          .update(JSON.stringify(prepared))
           .digest("hex"),
         generatedAt: new Date().toISOString(),
       };

@@ -262,6 +262,19 @@ model CashOpeningSetting {
   updatedAt     DateTime @updatedAt
 }
 
+// Pelengkap laporan tersimpan sebagai versi baru; tidak mengubah transaksi atau versi lama.
+model FinancialReportPreparation {
+  id        String   @id @default(cuid())
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  version   Int
+  values    Json
+  createdBy String
+  createdAt DateTime @default(now())
+
+  @@unique([startDate, endDate, version])
+}
+
 model BudgetEstimate {
   id                    String              @id @default(cuid())
   budgetNumber          String              @unique

@@ -1,6 +1,7 @@
 import type { ReportData } from "@/features/reports/schema";
 export function reportFixture(): ReportData {
   return {
+    sourceRevision: "0".repeat(64),
     trade: {
       invoices: [],
       payments: [],

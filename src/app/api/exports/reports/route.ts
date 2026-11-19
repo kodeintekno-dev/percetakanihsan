@@ -7,6 +7,10 @@ import {
 } from "@/features/reports/schema";
 import { getReport } from "@/features/reports/service";
 import { reportsCsv, reportsXlsx } from "@/features/reports/export";
+import { statementCsv, statementXlsx } from "@/features/reports/statement-export";
+import { buildStatement, preparationSchema, statementKindSchema, type StatementKind, type ReportPreparation } from "@/features/reports/statements";
+import type { ReportData } from "@/features/reports/schema";
+import { assertSameOrigin, readJson } from "@/lib/http";
 export const runtime = "nodejs";
 export async function GET(request: Request) {
   try {
@@ -24,12 +28,17 @@ export async function GET(request: Request) {
           )
         : undefined;
     params.delete("revision");
+    const kinds = params.getAll("statement");
+    const kind = kinds.length ? statementKindSchema.parse(kinds.length === 1 ? kinds[0] : null) : undefined;
+    params.delete("statement");
     const data = await getReport(parseReportFilters(params));
     if (revision && revision !== data.revision)
       throw new AppError(
         "Data berubah sejak laporan ditampilkan. Muat ulang laporan, lalu ekspor kembali.",
         409,
       );
+    if (kind) return await statementResponse(data, kind, format);
+    // Preserve the old complete-export URL for existing integrations. The UI always selects a statement.
     return new Response(
       format === "csv" ? reportsCsv(data) : await reportsXlsx(data),
       {
@@ -47,4 +56,35 @@ export async function GET(request: Request) {
   } catch (error) {
     return errorResponse(error);
   }
+}
+
+export async function POST(request: Request) {
+  try {
+    await requireAdmin();
+    assertSameOrigin(request);
+    const body = z.object({
+      filters: z.record(z.string(), z.unknown()),
+      statement: statementKindSchema,
+      format: z.enum(["csv", "xlsx"]),
+      revision: reportRevisionSchema,
+      values: preparationSchema,
+    }).strict().parse(await readJson(request));
+    const data = await getReport(parseReportFilters(body.filters));
+    if (body.revision !== data.revision) throw new AppError("Data berubah sejak laporan ditampilkan. Muat ulang laporan, lalu ekspor kembali.", 409);
+    return await statementResponse(data, body.statement, body.format, body.values);
+  } catch (error) { return errorResponse(error); }
+}
+
+async function statementResponse(data: ReportData, kind: StatementKind, format: "csv" | "xlsx", values?: ReportPreparation) {
+  const report = buildStatement(data, kind, values);
+  const period = kind === "neraca" ? data.period.end : `${data.period.start}_${data.period.end}`;
+  return new Response(format === "csv" ? statementCsv(report) : await statementXlsx(report), {
+    headers: {
+      "Content-Type": format === "csv" ? "text/csv; charset=utf-8" : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "Content-Disposition": `attachment; filename="${kind}-${period}.${format}"`,
+      "Cache-Control": "private, no-store",
+      "X-Report-Revision": data.revision,
+      "X-Report-Status": report.status,
+    },
+  });
 }
