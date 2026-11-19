@@ -1,7 +1,20 @@
+import { Suspense } from "react";
 import { requirePageAdmin } from "@/lib/auth/session";
-import { parseTradeFilters } from "@/features/trade/schema";
+import {
+  parseTradeFilters,
+  tradeKinds,
+  type TradeFilters,
+} from "@/features/trade/schema";
 import { listInvoices } from "@/features/trade/service";
 import { TradeList } from "@/features/trade/trade-list";
+import { TradeListShell } from "@/features/trade/trade-list-shell";
+import { TradeListLoading } from "@/features/trade/trade-list-loading";
+import "@/features/trade/trade.css";
+
+async function InvoiceResults({ filters }: { filters: TradeFilters }) {
+  return <TradeList filters={filters} data={await listInvoices(filters)} />;
+}
+
 export default async function Page({
   searchParams,
 }: {
@@ -9,5 +22,14 @@ export default async function Page({
 }) {
   await requirePageAdmin();
   const filters = parseTradeFilters(await searchParams);
-  return <TradeList filters={filters} data={await listInvoices(filters)} />;
+  return (
+    <TradeListShell kind={filters.kind} kinds={tradeKinds}>
+      <Suspense
+        key={JSON.stringify(filters)}
+        fallback={<TradeListLoading kind={filters.kind} />}
+      >
+        <InvoiceResults filters={filters} />
+      </Suspense>
+    </TradeListShell>
+  );
 }

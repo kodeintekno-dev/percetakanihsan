@@ -12,6 +12,7 @@ import {
   paymentCandidates,
 } from "@/features/trade/service";
 import { parseTradeFilters } from "@/features/trade/schema";
+import { databaseDate, dateOnly, todayJakarta } from "@/lib/date";
 import {
   createCash,
   editCash,
@@ -141,6 +142,74 @@ describe.skipIf(!url)("Hutang-Piutang: tagihan, kas dan konsistensi", () => {
     cashIds.push(row.id);
     return row;
   }
+  it("ringkasan tetap tepat untuk batas jatuh tempo, pencarian, jenis dan semua status", async () => {
+    const today = todayJakarta();
+    const day = (offset: number) => {
+      const date = databaseDate(today);
+      date.setUTCDate(date.getUTCDate() + offset);
+      return dateOnly(date);
+    };
+    // The large amount must stay exact through SQL aggregation and serialization.
+    const cases = [
+      { amount: "999999999999999999", paidAmount: "1", dueDate: day(-1) },
+      { amount: "100", paidAmount: "0", dueDate: today },
+      { amount: "200", paidAmount: "50", dueDate: day(7) },
+      { amount: "300", paidAmount: "0", dueDate: day(8) },
+      { amount: "400", paidAmount: "400", dueDate: day(-1) },
+      {
+        amount: "500",
+        paidAmount: "0",
+        dueDate: today,
+        cancelledAt: new Date(),
+        cancelReason: "QA dibatalkan",
+      },
+    ];
+    for (const data of cases) {
+      const id = randomUUID();
+      invoiceIds.push(id);
+      await getDb().tradeInvoice.create({
+        data: {
+          id,
+          kind: "PAYABLE",
+          requestHash: id,
+          reference: `${prefix}-${invoiceIds.length}`,
+          referenceKey: `${prefix}-${invoiceIds.length}`,
+          partyName: "Pemasok Ringkasan",
+          issueDate: databaseDate("2020-01-05"),
+          expensePostId: postId,
+          expenseGroupSnapshot: "PRODUCTION",
+          ...data,
+          dueDate: databaseDate(data.dueDate),
+        },
+      });
+    }
+    const ar = await invoice();
+    for (const status of ["", "OPEN", "PARTIAL", "PAID", "OVERDUE", "CANCELLED"]) {
+      const page = await listInvoices(
+        parseTradeFilters({ kind: "PAYABLE", q: prefix.toUpperCase(), status }),
+      );
+      expect(page.summary).toEqual({
+        remaining: "1000000000000000548",
+        overdue: "999999999999999998",
+        dueSoon: "250",
+        openCount: 4,
+      });
+    }
+    const receivables = await listInvoices(
+      parseTradeFilters({ kind: "RECEIVABLE", q: prefix }),
+    );
+    expect(receivables.rows.map((row) => row.id)).toEqual([ar.id]);
+    expect(receivables.summary.remaining).toBe("2000000");
+    const empty = await listInvoices(
+      parseTradeFilters({ kind: "PAYABLE", q: `${prefix}-missing` }),
+    );
+    expect(empty.summary).toEqual({
+      remaining: "0",
+      overdue: "0",
+      dueSoon: "0",
+      openCount: 0,
+    });
+  });
   it("pembuatan tagihan tidak mengubah kas; DP lama dan angsuran baru dihitung sekali sampai lunas", async () => {
     const before = await getFinancialSummary(period);
     let r = await invoice();

@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { Plus, ArrowUpRight, Search } from "lucide-react";
-import { PageHeading } from "@/components/page-heading";
 import { displayDate } from "@/lib/date";
 import { formatRupiah } from "@/lib/money";
 import {
-  tradeKinds,
   tradeStatuses,
   type InvoicePage,
   type TradeFilters,
@@ -40,23 +38,7 @@ export function TradeList({
   const url = (page: number) =>
     `/hutang-piutang?${new URLSearchParams({ ...filters, page: String(page) })}`;
   return (
-    <div className="trade-page">
-      <PageHeading
-        eyebrow="KEUANGAN USAHA"
-        title="Hutang-Piutang"
-        description="Pantau tagihan pelanggan dan kewajiban ke pemasok. Pembayaran terhubung langsung ke Buku Kas."
-      />
-      <nav className="trade-tabs" aria-label="Jenis tagihan">
-        {Object.entries(tradeKinds).map(([key, title]) => (
-          <Link
-            key={key}
-            href={`/hutang-piutang?kind=${key}`}
-            aria-current={filters.kind === key ? "page" : undefined}
-          >
-            {title}
-          </Link>
-        ))}
-      </nav>
+    <>
       <TradeExportButtons filters={filters} />
       <div className="trade-stats">
         <div>
@@ -92,7 +74,11 @@ export function TradeList({
           Tambah {label}
         </Link>
       </div>
-      <form className="trade-filters" action="/hutang-piutang">
+      <form
+        key={JSON.stringify(filters)}
+        className="trade-filters"
+        action="/hutang-piutang"
+      >
         <input type="hidden" name="kind" value={filters.kind} />
         <label>
           Cari tagihan
@@ -200,6 +186,6 @@ export function TradeList({
         Membuat tagihan tidak mengubah saldo kas. Pembayaran baru otomatis masuk
         Buku Kas; DP lama dapat ditautkan dari detail tagihan.
       </p>
-    </div>
+    </>
   );
 }

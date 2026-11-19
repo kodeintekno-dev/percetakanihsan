@@ -122,24 +122,6 @@ export async function listInvoices(
   end.setUTCDate(end.getUTCDate() + 7);
   return getDb().$transaction(
     async (tx) => {
-      const fields = tx.tradeInvoice.fields;
-      const base: Prisma.TradeInvoiceWhereInput = {
-        kind: filters.kind,
-        ...(filters.q
-          ? {
-              OR: ["reference", "partyName", "orderNumberSnapshot"].map(
-                (key) => ({
-                  [key]: { contains: filters.q, mode: "insensitive" },
-                }),
-              ),
-            }
-          : {}),
-      };
-      const open: Prisma.TradeInvoiceWhereInput = {
-        ...base,
-        cancelledAt: null,
-        amount: { gt: fields.paidAmount },
-      };
       const where = invoiceWhere(tx, filters, today);
       const total = await tx.tradeInvoice.count({ where }),
         totalPages = Math.max(1, Math.ceil(total / 25)),
@@ -151,29 +133,33 @@ export async function listInvoices(
         skip: (page - 1) * 25,
         take: 25,
       });
-      const sum = async (extra: Prisma.TradeInvoiceWhereInput = {}) => {
-        const r = await tx.tradeInvoice.aggregate({
-          where: { AND: [open, extra] },
-          _sum: { amount: true, paidAmount: true },
-        });
-        return (r._sum.amount ?? new Prisma.Decimal(0))
-          .sub(r._sum.paidAmount ?? 0)
-          .toFixed(0);
-      };
+      // One database pass for all summary cards; keep Rupiah as exact strings.
+      const [summary] = await tx.$queryRaw<InvoicePage["summary"][]>(Prisma.sql`
+        SELECT
+          COALESCE(SUM("amount" - "paidAmount"), 0)::text AS "remaining",
+          COALESCE(SUM("amount" - "paidAmount") FILTER (
+            WHERE "dueDate" < ${databaseDate(today)}
+          ), 0)::text AS "overdue",
+          COALESCE(SUM("amount" - "paidAmount") FILTER (
+            WHERE "dueDate" >= ${databaseDate(today)} AND "dueDate" <= ${end}
+          ), 0)::text AS "dueSoon",
+          COUNT(*)::int AS "openCount"
+        FROM "TradeInvoice"
+        WHERE "kind" = ${filters.kind}::"TradeKind"
+          AND "cancelledAt" IS NULL AND "amount" > "paidAmount"
+          ${filters.q ? Prisma.sql`AND (
+            "reference" ILIKE ${`%${filters.q}%`}
+            OR "partyName" ILIKE ${`%${filters.q}%`}
+            OR "orderNumberSnapshot" ILIKE ${`%${filters.q}%`}
+          )` : Prisma.empty}
+      `);
       return {
         rows: rows.map((r) => serialize(r, today)),
         page,
         total,
         totalPages,
         today,
-        summary: {
-          remaining: await sum(),
-          overdue: await sum({ dueDate: { lt: databaseDate(today) } }),
-          dueSoon: await sum({
-            dueDate: { gte: databaseDate(today), lte: end },
-          }),
-          openCount: await tx.tradeInvoice.count({ where: open }),
-        },
+        summary,
       };
     },
     { isolationLevel: "RepeatableRead" },
