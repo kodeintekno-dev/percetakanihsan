@@ -1,12 +1,12 @@
 import "server-only";
 import ExcelJS from "exceljs";
 import { spreadsheetNumber, tabularCsv, type ExportCell } from "@/lib/spreadsheet-export";
-import type { FinancialStatement } from "./statements";
+import { automaticReportLabel, type FinancialStatement } from "./statements";
 
 export function statementCsv(report: FinancialStatement) {
   const rows: ExportCell[][] = [
     ["CV Ihsan Mandiri", null], [report.title, null], [report.period, null],
-    [report.status === "draft" ? "DRAF — perlu pemeriksaan" : "Kelengkapan telah dikonfirmasi", null],
+    [report.status === "draft" ? "DRAF — perlu pemeriksaan" : automaticReportLabel, null],
     ...report.rows.map(row => [row.label, row.amount === null ? row.style === "section" ? null : "Belum tersedia" : { number: row.amount }] as ExportCell[]),
     ...report.issues.map(note => [`Perlu diperiksa: ${note}`, null] as ExportCell[]),
     ...report.notes.map(note => [note, null] as ExportCell[]),
@@ -28,7 +28,7 @@ export async function statementXlsx(report: FinancialStatement) {
     headerFooter: { oddFooter: `${report.title} | Halaman &P dari &N` },
   });
   sheet.columns = [{ width: 57 }, { width: 26 }];
-  for (const [i, text] of ["CV Ihsan Mandiri", report.title, report.period, report.status === "draft" ? "DRAF — perlu pemeriksaan" : "Kelengkapan telah dikonfirmasi"].entries()) {
+  for (const [i, text] of ["CV Ihsan Mandiri", report.title, report.period, report.status === "draft" ? "DRAF — perlu pemeriksaan" : automaticReportLabel].entries()) {
     sheet.mergeCells(i + 1, 1, i + 1, 2);
     const cell = sheet.getCell(i + 1, 1);
     cell.value = text;

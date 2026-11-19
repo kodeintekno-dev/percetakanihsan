@@ -8,7 +8,6 @@ import { AppError } from "@/lib/app-error";
 import { serializeAsset } from "@/features/assets/service";
 import { assetDepreciation } from "@/features/assets/depreciation";
 import { reportTradeSnapshot } from "@/features/trade/export-data";
-import { readPreparation } from "./preparation-service";
 import {
   reportPeriod,
   reportFilterSchema,
@@ -40,8 +39,13 @@ export async function getReport(filters: ReportFilters): Promise<ReportData> {
     async (tx) => {
       const finance = await financialSummary(tx, period.start, period.end);
       const trade = await reportTradeSnapshot(tx, period.start, period.end);
-      const preparation = await readPreparation(tx, period.start, period.end);
-      const fixedAssets = await tx.fixedAsset.findMany({ where: { startDate: { lte: databaseDate(period.end) } }, orderBy: [{ startDate: "asc" }, { id: "asc" }] });
+      const fixedAssets = await tx.fixedAsset.findMany({
+        where: { OR: [
+          { startDate: { lte: databaseDate(period.end) } },
+          { purchaseCash: { is: { deletedAt: null, transactionDate: { lte: databaseDate(period.end) } } } },
+        ] },
+        orderBy: [{ startDate: "asc" }, { id: "asc" }],
+      });
       const assetRows = fixedAssets.map((a) => ({
         id: a.id,
         name: a.name,
@@ -127,6 +131,9 @@ export async function getReport(filters: ReportFilters): Promise<ReportData> {
           orderBy: { transactionDate: "asc" },
         }),
       ]);
+      const balanceCash = finance.balanceStatus === "BEFORE_OPENING" && opening?.isConfigured && dateOnly(opening.openingDate) <= period.end
+        ? (await financialSummary(tx, dateOnly(opening.openingDate), period.end)).closingBalance
+        : finance.closingBalance;
       const categoryIds = [
         ...new Set(
           saleGroups.flatMap((g) =>
@@ -323,6 +330,7 @@ export async function getReport(filters: ReportFilters): Promise<ReportData> {
           503,
         );
       const result = {
+        balanceCash,
         trade,
         assets,
         period,
@@ -351,21 +359,10 @@ export async function getReport(filters: ReportFilters): Promise<ReportData> {
         daily,
       };
       const sourceRevision = createHash("sha256").update(JSON.stringify(result)).digest("hex");
-      const stale = preparation.version > 0 && preparation.sourceRevision !== sourceRevision;
-      const prepared = {
+      return {
         ...result,
         sourceRevision,
-        preparation: {
-          ...preparation,
-          stale,
-          values: stale ? { ...preparation.values, classificationConfirmed: false, balanceConfirmed: false } : preparation.values,
-        },
-      };
-      return {
-        ...prepared,
-        revision: createHash("sha256")
-          .update(JSON.stringify(prepared))
-          .digest("hex"),
+        revision: sourceRevision,
         generatedAt: new Date().toISOString(),
       };
     },

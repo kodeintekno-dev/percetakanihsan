@@ -8,7 +8,7 @@ import {
 import { getReport } from "@/features/reports/service";
 import { reportsCsv, reportsXlsx } from "@/features/reports/export";
 import { statementCsv, statementXlsx } from "@/features/reports/statement-export";
-import { buildStatement, preparationSchema, statementKindSchema, type StatementKind, type ReportPreparation } from "@/features/reports/statements";
+import { buildStatement, statementKindSchema, type StatementKind } from "@/features/reports/statements";
 import type { ReportData } from "@/features/reports/schema";
 import { assertSameOrigin, readJson } from "@/lib/http";
 export const runtime = "nodejs";
@@ -67,16 +67,15 @@ export async function POST(request: Request) {
       statement: statementKindSchema,
       format: z.enum(["csv", "xlsx"]),
       revision: reportRevisionSchema,
-      values: preparationSchema,
     }).strict().parse(await readJson(request));
     const data = await getReport(parseReportFilters(body.filters));
     if (body.revision !== data.revision) throw new AppError("Data berubah sejak laporan ditampilkan. Muat ulang laporan, lalu ekspor kembali.", 409);
-    return await statementResponse(data, body.statement, body.format, body.values);
+    return await statementResponse(data, body.statement, body.format);
   } catch (error) { return errorResponse(error); }
 }
 
-async function statementResponse(data: ReportData, kind: StatementKind, format: "csv" | "xlsx", values?: ReportPreparation) {
-  const report = buildStatement(data, kind, values);
+async function statementResponse(data: ReportData, kind: StatementKind, format: "csv" | "xlsx") {
+  const report = buildStatement(data, kind);
   const period = kind === "neraca" ? data.period.end : `${data.period.start}_${data.period.end}`;
   return new Response(format === "csv" ? statementCsv(report) : await statementXlsx(report), {
     headers: {

@@ -1,35 +1,36 @@
-# Verifikasi laporan keuangan terpisah — 19 November 2026
+# Verifikasi laporan otomatis — 19 November 2026
 
-## Hasil implementasi
+## Perilaku akhir
 
-- Halaman Laporan menyediakan Neraca, Laba Rugi dan Arus Kas; setiap unduhan hanya memuat satu jenis dengan dua kolom dan tanpa ID internal.
-- XLSX: A4 portrait, lebar satu halaman, area cetak A:B, font isi 11 pt, judul berulang. Tinggi tidak dipaksa menjadi satu halaman. CSS cetak menyembunyikan navigasi dan formulir, serta memakai halaman A4 khusus laporan.
-- CSV: UTF-8 BOM, dua kolom, angka presisi dan perlindungan formula injection. CSV tidak menyimpan tata cetak.
-- Neraca memakai saldo kas akhir, tagihan tercatat dan aset yang sudah mulai digunakan pada tanggal neraca, ditambah saldo pelengkap yang diisi dan diperiksa pengguna. Modal/saldo laba tidak dibuat otomatis sebagai angka penyeimbang. Data belum lengkap atau berselisih tetap draf.
-- Laba rugi mempertahankan basis kas dengan penyusutan, disertai pengelompokan ulang modal/pinjaman/pembelian aset. Belum akrual penuh. Penjualan aset membuat laba rugi tetap draf karena laba/rugi pelepasan belum tersedia.
-- Pelengkap tersimpan mengikuti periode, menambah versi baru tanpa menimpa riwayat. Revisi usang ditolak. Perubahan sumber membatalkan konfirmasi pada hasil baca tanpa mengubah baris versi lama.
+- Neraca, Laba Rugi dan Arus Kas terpisah, masing-masing diekspor sebagai satu worksheet Excel atau CSV dua kolom. Form dan tombol simpan pelengkap dihapus.
+- Kas neraca mencakup saldo pembukaan dan seluruh pergerakan sampai tanggal akhir. Kas per tanggal neraca tetap tersedia ketika awal rentang mendahului pembukaan, asalkan tanggal akhir sudah pada/setelah pembukaan.
+- Aset = kas akhir + sisa piutang tercatat + nilai buku aset. Hutang = sisa hutang pemasok tercatat. Ekuitas = aset - hutang. Modal pemilik dan saldo laba disajikan sebagai ekuitas gabungan karena transaksi lama belum memisahkan sumber tersebut.
+- Contoh teruji tanpa transaksi/pos lain: saldo pembukaan Rp5.000.000 menghasilkan kas, aset dan ekuitas masing-masing Rp5.000.000. Saldo pembukaan tidak dihitung dua kali atau dimasukkan ke pendapatan.
+- Perubahan transaksi langsung memengaruhi laporan saat dimuat ulang, tanpa isian atau konfirmasi pelengkap.
+- Aset dengan pembayaran tertaut sebelum tanggal neraca sudah termasuk meskipun baru digunakan bulan berikutnya; penyusutan tetap mengikuti bulan mulai digunakan. Aset masa depan tanpa bukti pembayaran sebelum tanggal neraca dikecualikan.
+- Laba rugi mengikuti Buku Kas dengan penyesuaian pembelian aset tertaut dan penyusutan. Arus kas memisahkan investasi aset tertaut dari kas lainnya. Excel tetap A4 portrait, area cetak A:B, lebar satu halaman, isi 11 pt; tinggi tidak dipaksa menjadi satu halaman.
 
-## Perlindungan database aplikasi
+## Keutuhan database
 
-Database aplikasi tidak dipakai dalam pengujian. Tidak ada migrasi, seed, bootstrap admin, pembaruan atau penghapusan yang dijalankan terhadap database aplikasi. Build/typecheck memakai URL sentinel localhost port 1. Pengujian database hanya memakai dua database simulasi pada cluster PostgreSQL baru di `.qa`, localhost port 54987.
+Tidak ada koneksi, migrasi, seed, bootstrap, update atau penghapusan terhadap database aplikasi dalam pekerjaan ini. Seluruh pengujian memakai dua database baru di cluster QA lokal port 54987: `qa_automatic_reports_tests` dan `qa_automatic_reports_legacy`. Build/typecheck menggunakan URL sentinel localhost port 1.
 
-Migrasi `20261119000000_financial_report_preparations` disiapkan dan hanya diuji pada database QA. Isinya membuat tabel baru `FinancialReportPreparation` beserta indeks dan constraint, tanpa mengubah tabel bisnis lama. Migrasi **belum diterapkan ke database aplikasi**. Sebelum tabel tersedia, halaman tetap dapat mempratinjau/mengekspor isian sementara dan tombol simpan dinonaktifkan.
+Database QA legacy dibuat hanya dengan skema bisnis lama, **tanpa `FinancialReportPreparation`**. Laporan, halaman HTML dan enam unduhan HTTP final berhasil di sana. Fingerprint seluruh baris pada 15 tabel lama identik sebelum/sesudah pembacaan dan ekspor. Tes integrasi juga memasukkan arsip pelengkap manual ke database QA biasa: arsip tidak memengaruhi angka/fingerprint laporan dan tetap identik setelah laporan dibaca. Fingerprint keutuhan mencakup seluruh 16 tabel ketika arsip tersebut tersedia.
 
-Perbandingan fingerprint seluruh baris pada 15 tabel lama di database QA tetap identik sebelum/sesudah pembacaan, enam ekspor HTTP, dan penyimpanan pelengkap. Jalur baca/ekspor hanya menjalankan query baca. Jalur simpan pelengkap hanya menggunakan `create` pada tabel baru; tidak ada endpoint ubah/hapus versi.
+Laporan otomatis tidak lagi membaca/menulis tabel pelengkap. Model dan migrasi historis tetap dipertahankan, tanpa perubahan/drop/backfill. Endpoint simpan lama memeriksa admin/origin lalu mengembalikan **410**; endpoint tidak menjalankan query laporan atau menyimpan data. Ekspor menolak nominal `values` dari klien dengan **422** dan revisi usang dengan **409**. Tidak diperlukan migrasi baru untuk perubahan otomatis ini.
 
-## Pengujian yang lulus
+## Hasil pengujian final
 
-- 147 tes unit, termasuk 26 tes baru untuk angka, kelengkapan, presisi, struktur ekspor, autentikasi, origin, batas body dan revisi.
-- 86 tes integrasi/HTTP pada build final dengan database QA bersih, termasuk 4 tes baru untuk readiness tanpa tabel, pengecualian aset masa depan, keutuhan tabel lama, versi pelengkap dan pembatalan konfirmasi saat sumber berubah.
-- Enam ekspor HTTP final (tiga jenis × CSV/XLSX): HTTP 200, nama file/worksheet benar, dua kolom, nominal cocok dengan pratinjau. Ekspor memakai revisi usang mengembalikan 409.
-- ESLint, TypeScript, `git diff --check`, dan build produksi Webpack pada salinan QA lulus. Next.js mengubah `next-env.d.ts` secara otomatis ketika menghasilkan tipe/build.
-- Browser: pergantian jenis, neraca simulasi seimbang, isian belum diterapkan memblokir ekspor, simpan versi dan muat ulang mempertahankan jenis laporan terpilih. Tampilan 390 px tidak meluber ke samping. Angka negatif ditampilkan tanpa pengulangan simbol Rupiah.
-- Ketiga workbook contoh dibaca ulang dan dirender melalui runtime spreadsheet. Judul, angka, subtotal, total, catatan dan dua kolom terbaca.
+- **146 tes unit lulus**, termasuk saldo Rp5 juta, saldo nol, ekuitas negatif, piutang/hutang/aset, pembelian aset dan penyusutan, tanggal pembukaan, presisi 18 digit, formula injection, kontrak HTTP dan render komponen tanpa form pelengkap.
+- **88 tes integrasi/HTTP lulus** pada build final dengan database QA bersih. Enam tes integrasi khusus laporan otomatis mencakup keutuhan data, arsip manual yang diabaikan, tanggal akhir yang sama pada rentang berbeda, pembaruan otomatis setelah transaksi, aset dibayar sebelum digunakan, dan awal rentang sebelum pembukaan kas.
+- **Enam unduhan HTTP final lulus** pada database legacy: tiga jenis × CSV/XLSX, semua HTTP 200 tanpa isian pelengkap. Angka CSV cocok dengan pratinjau; worksheet tunggal, dua kolom dan portrait diverifikasi. Halaman HTML menampilkan Rp5 juta dan tidak memuat form/tombol pelengkap.
+- **ESLint, TypeScript, `git diff --check`, dan build produksi Webpack pada salinan QA lulus.**
+- Ketiga workbook contoh dirender dan diperiksa: judul, angka, subtotal/total, keterangan pembukaan dan ekuitas terbaca; tidak ada kolom modal/saldo laba yang menampilkan “Belum tersedia”.
 
-## Batas verifikasi dan tindak lanjut
+## Batas dan tindak lanjut
 
-- Alat otomatisasi pembuka Excel serta penantian event unduhan browser macet. Cetak langsung di Microsoft Excel/printer fisik dan alur unduhan browser sampai selesai belum terverifikasi. Pengaturan cetak serta hasil berkas HTTP telah diperiksa; target 1–2 halaman per jenis belum menjadi jaminan jumlah halaman pada setiap printer/aplikasi spreadsheet.
-- Build mengeluarkan peringatan keamanan pada versi Next.js yang terpasang. Perintah build berikutnya berhasil dengan peringatan tersebut. Dependensi tidak diperbarui dalam pekerjaan ini; tindak lanjut keamanan perlu dilakukan tersendiri.
-- Driver PostgreSQL mengeluarkan peringatan deprecation mengenai query bersamaan pada satu client; tes tetap lulus.
-- Neraca memerlukan pemeriksaan saldo awal/modal/saldo laba, uang muka dan kelengkapan tagihan oleh pengelola. Penghentian/pelepasan aset serta laporan akrual penuh belum ditambahkan.
-- Tidak ada deployment, commit atau push. Server aplikasi QA dan cluster PostgreSQL QA telah dihentikan setelah pengujian.
+- Keseimbangan neraca berasal dari aset dan hutang yang tersedia, bukan bukti seluruh posisi keuangan sudah tercatat. Persediaan, pinjaman, uang muka, setoran/pengambilan pemilik dan pelepasan aset yang belum memiliki pencatatan khusus tidak ditebak atau disajikan nol seolah sudah diverifikasi. Modal dan saldo laba tidak dipisah secara buatan.
+- Laba rugi masih basis kas dengan penyusutan, belum akrual penuh. Pemasukan lain-lain tetap mengikuti Buku Kas; modal, pinjaman dan hasil penjualan aset belum bisa diklasifikasikan terpisah secara andal dari data tersebut. Arus pendanaan lengkap belum dapat dihasilkan otomatis tanpa sumber klasifikasi yang memadai.
+- Kas yang memang belum tersedia karena pembukaan belum diatur atau tanggal neraca mendahului pembukaan tetap ditandai draf, bukan nol.
+- Cetak langsung di Microsoft Excel/printer fisik belum diverifikasi. Pengaturan XLSX dan render workbook diuji; target 1–2 halaman per jenis tetap bergantung aplikasi/printer. Pemeriksaan UI kali ini memakai render komponen dan respons HTML, bukan sesi browser interaktif.
+- Build masih mengeluarkan peringatan keamanan versi Next.js terpasang. Pengulangan perintah build berhasil dengan peringatan tersebut; dependensi tidak diubah. Driver PostgreSQL juga mengeluarkan peringatan deprecation query bersamaan yang sudah ada sebelumnya.
+- Tidak ada commit, push atau deployment. Proses aplikasi dan PostgreSQL QA dihentikan setelah pemeriksaan final.

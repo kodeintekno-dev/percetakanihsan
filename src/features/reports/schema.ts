@@ -141,13 +141,8 @@ export type DailyCashFlow = {
 };
 export type ReportData = {
   sourceRevision?: string;
-  preparation?: {
-    available: boolean;
-    version: number;
-    values: import("./statements").ReportPreparation;
-    savedAt: string | null;
-    stale?: boolean;
-  };
+  /** Closing cash at the balance-sheet date, even when the selected period starts before opening. */
+  balanceCash?: string | null;
   trade: import("@/features/trade/export-data").TradeExportData & {
     receivableRemaining: string;
     payableRemaining: string;
